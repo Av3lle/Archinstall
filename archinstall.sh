@@ -58,6 +58,7 @@ fi
 clear
 echo "Выберите тип файловой сисетемы: "
 echo "1 - ext4   2 - btrfs   3 - xfs"
+lsblk
 read FILE_SYSTEM
 
 echo -n "Выберите корневой раздел (Например: /dev/sda1): "
@@ -81,6 +82,12 @@ fi
 
 # Монтируем корневой раздел + форматируем BOOT раздел
 mount "$ROOT_PARTITION" /mnt
+
+efidirectory="/boot/efi/"
+if [ ! -d "$efidirectory" ]; then
+  mkdir -p "$efidirectory"
+fi
+mount "$BOOT_PARTITION" "$efidirectory"
 mkfs.fat -F 32 "$BOOT_PARTITION"
 
 
@@ -114,8 +121,6 @@ fi
 # Генерируем файл fstab
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
-sleep 2
-
 
 # Переходим в установленную систему
 arch-chroot /mnt
@@ -145,13 +150,6 @@ systemctl enable NetworkManager
 echo "Идет настройка загрузчика..."
 
 pacman -S --needed --noconfirm grub efibootmgr
-efidirectory="/boot/efi/"
-
-if [ ! -d "$efidirectory" ]; then
-  mkdir -p "$efidirectory"
-fi
-
-mount "$BOOT_PARTITION" "$efidirectory"
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable
 grub-mkconfig -o /boot/grub/grub.cfg
 sleep 2
