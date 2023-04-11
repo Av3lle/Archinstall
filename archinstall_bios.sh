@@ -148,8 +148,9 @@ systemctl enable NetworkManager
 
 # Устанавливаем загрузчик
 echo "Идет настройка загрузчика..."
-
-grub-install --target=i386-pc "$DRIVE"
+lsblk
+read DRIVE_BOOT_BIOS
+grub-install --target=i386-pc "$DRIVE_BOOT_BIOS"
 grub-mkconfig -o /boot/grub/grub.cfg
 sleep 2
 clear
