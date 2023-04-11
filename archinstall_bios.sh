@@ -147,6 +147,8 @@ pacman -S --needed --noconfirm networkmanager iwd nano
 systemctl enable NetworkManager
 
 # Устанавливаем загрузчик
+pacman -S --needed --noconfirm grub
+clear
 echo "Идет настройка загрузчика..."
 lsblk
 read DRIVE_BOOT_BIOS
