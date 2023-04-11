@@ -127,12 +127,12 @@ clear
 sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
 chmod +x /mnt/post_archinstall.sh
 arch-chroot /mnt ./post_archinstall.sh
-clear
+
+
+#part2
 echo "Система будет перезагружена через 10 сек."
 sleep 10
 reboot
-
-#part2
 # Устанавливаем язык и часовой пояс
 echo $'\nИдет настройка локалей...'
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
