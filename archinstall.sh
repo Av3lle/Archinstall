@@ -58,9 +58,10 @@ fi
 clear
 echo "Выберите тип файловой сисетемы: "
 echo "1 - ext4   2 - btrfs   3 - xfs"
-lsblk
 read FILE_SYSTEM
+clear
 
+lsblk
 echo -n "Выберите корневой раздел (Например: /dev/sda1): "
 read ROOT_PARTITION
 
@@ -122,10 +123,16 @@ fi
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
 
-# Переходим в установленную систему
-arch-chroot /mnt
+clear
+sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
+chmod +x /mnt/post_archinstall.sh
+arch-chroot /mnt ./post_archinstall.sh
+clear
+echo "Система будет перезагружена через 10 сек."
+sleep 10
+reboot
 
-
+#part2
 # Устанавливаем язык и часовой пояс
 echo $'\nИдет настройка локалей...'
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
