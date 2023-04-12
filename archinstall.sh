@@ -14,24 +14,6 @@ timedatectl set-ntp true
 clear
 
 
-
-#   UEFI
-#echo "Выберите диск для установки: "
-#lsblk
-#read DRIVE
-#parted --script ${DRIVE} mktable gpt
-#parted --script ${DRIVE} mkpart "EFI system partition" fat32 1MiB 512MiB
-#parted --script ${DRIVE} set 1 esp on
-#parted --script ${DRIVE} mkpart "root partition" ext4 512MiB 100%
-#mkfs.vfat -F32 ${DRIVE}1
-#mkfs.ext4 ${DRIVE}2
-
-#   BIOS
-#parted --script ${DRIVE} mkpart primary ext4 1MiB 100%
-#parted --script ${DRIVE} set 1 boot on
-
-
-
 lsblk
 echo -n "Выберите диск для установки (Например: /dev/nvme0n1): "
 read DRIVE
@@ -49,9 +31,9 @@ elif [[ $PARTITION_UTIL == 3 ]] || [[ $PARTITION_UTIL == gdisk ]] || [[ $PARTITI
 elif [[ $PARTITION_UTIL == 4 ]] || [[ $PARTITION_UTIL == cfdisk ]] || [[ $PARTITION_UTIL == Cfdisk ]] || [[ $PARTITION_UTIL == CFDISK ]]; then
   cfdisk $DRIVE
 else
-  echo "Произошла ошибка! Будет выбран fdisk!"
+  echo "Произошла ошибка! Будет выбран cfdisk!"
   sleep 2
-  fdisk $DRIVE
+  cfdisk $DRIVE
 fi
 
 
@@ -89,13 +71,6 @@ sleep 2
 mkdir /mnt/boot/efi
 sleep 2
 mount "$BOOT_PARTITION" /mnt/boot/efi
-
-#efidirectory="/boot/efi/"
-#if [ ! -d "$efidirectory" ]; then
-#  mkdir -p "$efidirectory"
-#fi
-#mount "$BOOT_PARTITION" "$efidirectory"
-#mkfs.fat -F 32 "$BOOT_PARTITION"
 
 
 # Проверяем созданные нами разделы 
@@ -135,19 +110,11 @@ lsblk
 sleep 5
 
 clear
-#sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
-#chmod +x /mnt/post_archinstall.sh
-arch-chroot /mnt 
-#./post_archinstall.sh
-
-
-#umount -R /mnt
-#echo "Система будет перезагружена через 10 сек."
-#sleep 10
-#reboot
+sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
+chmod +x /mnt/post_archinstall.sh
+arch-chroot /mnt ./post_archinstall.sh
 
 #part2
-
 # Устанавливаем язык и часовой пояс
 echo $'\nИдет настройка локалей...'
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
@@ -158,7 +125,7 @@ locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 
-echo $'\nИдет настройка даты и времени, по умолчанию МСК ...'
+echo $'\nИдет настройка даты и времени, по умолчанию МСК...'
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 hwclock --systohc --utc
 sleep 2
