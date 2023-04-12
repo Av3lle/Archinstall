@@ -170,11 +170,7 @@ systemctl enable NetworkManager
 
 # Устанавливаем загрузчик
 clear
-lsblk
 echo "Идет настройка загрузчика..."
-read BOOOT
-mount "$BOOOT" /boot/efi
-clear
 lsblk
 sleep 3
 
