@@ -14,24 +14,6 @@ timedatectl set-ntp true
 clear
 
 
-
-#   UEFI
-#echo "Выберите диск для установки: "
-#lsblk
-#read DRIVE
-#parted --script ${DRIVE} mktable gpt
-#parted --script ${DRIVE} mkpart "EFI system partition" fat32 1MiB 512MiB
-#parted --script ${DRIVE} set 1 esp on
-#parted --script ${DRIVE} mkpart "root partition" ext4 512MiB 100%
-#mkfs.vfat -F32 ${DRIVE}1
-#mkfs.ext4 ${DRIVE}2
-
-#   BIOS
-#parted --script ${DRIVE} mkpart primary ext4 1MiB 100%
-#parted --script ${DRIVE} set 1 boot on
-
-
-
 lsblk
 echo -n "Выберите диск для установки (Например: /dev/nvme0n1): "
 read DRIVE
@@ -49,9 +31,9 @@ elif [[ $PARTITION_UTIL == 3 ]] || [[ $PARTITION_UTIL == gdisk ]] || [[ $PARTITI
 elif [[ $PARTITION_UTIL == 4 ]] || [[ $PARTITION_UTIL == cfdisk ]] || [[ $PARTITION_UTIL == Cfdisk ]] || [[ $PARTITION_UTIL == CFDISK ]]; then
   cfdisk $DRIVE
 else
-  echo "Произошла ошибка! Будет выбран fdisk!"
+  echo "Произошла ошибка! Будет выбран cfdisk!"
   sleep 2
-  fdisk $DRIVE
+  cfdisk $DRIVE
 fi
 
 
@@ -62,12 +44,10 @@ read FILE_SYSTEM
 clear
 
 lsblk
-echo -n "Выберите корневой раздел (Например: /dev/sda1): "
+echo -n "Выберите корневой раздел (Например: /dev/sda2): "
 read ROOT_PARTITION
 
-echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
-read BOOT_PARTITION
-
+mkfs.vfat -F32 "$BOOT_PARTITION"
 if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
   mkfs.ext4 "$ROOT_PARTITION"
 elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
@@ -81,8 +61,9 @@ else
 fi
 
 
-# Монтируем корневой раздел + форматируем BOOT раздел
+# Монтируем корневой раздел + создаем каталоги
 mount "$ROOT_PARTITION" /mnt
+
 
 # Проверяем созданные нами разделы 
 clear
@@ -94,15 +75,17 @@ clear
 
 # Выбор ядра Linux и его установка
 #echo "1 - linux-lts   2 - linux-zen   3 - linux-xanmod   4 - linux-lqx"
-echo "1 - linux-lts   2 - linux-zen"
+echo "1 - linux   2 - linux-lts   3 - linux-zen"
 echo -n "Выберите ядро для установки: "
 read KERNEL
 
 echo "Идет установка ядра..."
-if [[ $KERNEL == 1 ]] || [[ $KERNEL == linux-lts ]] || [[ $KERNEL == Linux-lts ]] || [[ $KERNEL == LINUX-LTS ]]; then
+if [[ $KERNEL == 2 ]] || [[ $KERNEL == linux-lts ]] || [[ $KERNEL == Linux-lts ]] || [[ $KERNEL == LINUX-LTS ]]; then
   pacstrap /mnt base base-devel linux-firmware linux-lts linux-lts-headers
-elif [[ $KERNEL == 2 ]] || [[ $KERNEL == linux-zen ]] || [[ $KERNEL == Linux-zen ]] || [[ $KERNEL == LINUX-ZEN ]]; then
+elif [[ $KERNEL == 3 ]] || [[ $KERNEL == linux-zen ]] || [[ $KERNEL == Linux-zen ]] || [[ $KERNEL == LINUX-ZEN ]]; then
   pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers
+elif [[ $KERNEL == 1 ]] || [[ $KERNEL == linux ]] || [[ $KERNEL == Linux ]] || [[ $KERNEL == LINUX ]]; then
+  pacstrap /mnt base base-devel linux-firmware linux linux-headers
 #elif [[ $KERNEL == 3 ]] || [[ $KERNEL == linux-xanmod ]] || [[ $KERNEL == Linux-xanmod ]] || [[ $KERNEL == LINUX-XANMOD ]]; then
 #  pacman -Sy --needed --noconfirm
 #  pacstrap /mnt base base-devel linux-xanmod linux-xanmod-headers
@@ -114,17 +97,27 @@ fi
 # Генерируем файл fstab
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
+clear
+lsblk
+sleep 5
 
 clear
-sed '1,/^#part2$/d' archinstall_bios.sh > /mnt/post_archinstall_bios.sh
-chmod +x /mnt/post_archinstall_bios.sh
-arch-chroot /mnt ./post_archinstall_bios.sh
-umount -R /mnt
-echo "Система будет перезагружена через 10 сек."
-sleep 10
-reboot
+sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
+chmod +x /mnt/post_archinstall.sh
+arch-chroot /mnt ./post_archinstall.sh 1
 
 #part2
+
+if [[ $1 = 1 ]]; then
+  :
+else
+  umount -R /mnt
+  clear 
+  echo "Система будет перезагружена через 10 сек."
+  sleep 10
+  reboot
+fi
+
 
 # Устанавливаем язык и часовой пояс
 echo $'\nИдет настройка локалей...'
@@ -136,7 +129,7 @@ locale-gen
 echo "LANG=en_US.UTF-8" > /etc/locale.conf
 echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
 
-echo $'\nИдет настройка даты и времени, по умолчанию МСК ...'
+echo $'\nИдет настройка даты и времени, по умолчанию МСК...'
 ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 hwclock --systohc --utc
 sleep 2
@@ -147,12 +140,14 @@ pacman -S --needed --noconfirm networkmanager iwd nano
 systemctl enable NetworkManager
 
 # Устанавливаем загрузчик
-pacman -S --needed --noconfirm grub
 clear
 echo "Идет настройка загрузчика..."
 lsblk
-read DRIVE_BOOT_BIOS
-grub-install --target=i386-pc "$DRIVE_BOOT_BIOS"
+sleep 3
+
+pacman -S --needed --noconfirm grub efibootmgr
+read DRIVE_GRUB
+grub-install --target=i386-pc $DRIVE_GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 sleep 2
 clear
