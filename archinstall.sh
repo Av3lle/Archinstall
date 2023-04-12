@@ -135,9 +135,10 @@ lsblk
 sleep 5
 
 clear
-sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
-chmod +x /mnt/post_archinstall.sh
-arch-chroot /mnt ./post_archinstall.sh
+#sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
+#chmod +x /mnt/post_archinstall.sh
+arch-chroot /mnt 
+#./post_archinstall.sh
 
 
 #umount -R /mnt
