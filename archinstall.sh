@@ -68,6 +68,7 @@ read ROOT_PARTITION
 echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
 read BOOT_PARTITION
 
+mkfs.vfat -F32 "$BOOT_PARTITION"
 if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
   mkfs.ext4 "$ROOT_PARTITION"
 elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
@@ -81,15 +82,18 @@ else
 fi
 
 
-# Монтируем корневой раздел + форматируем BOOT раздел
+# Монтируем корневой раздел + создаем каталоги
+mkdir /mnt/boot
+mkdir /mnt/boot/efi
 mount "$ROOT_PARTITION" /mnt
+mount "$BOOT_PARTITION" /mnt/boot/efi
 
-efidirectory="/boot/efi/"
-if [ ! -d "$efidirectory" ]; then
-  mkdir -p "$efidirectory"
-fi
-mount "$BOOT_PARTITION" "$efidirectory"
-mkfs.fat -F 32 "$BOOT_PARTITION"
+#efidirectory="/boot/efi/"
+#if [ ! -d "$efidirectory" ]; then
+#  mkdir -p "$efidirectory"
+#fi
+#mount "$BOOT_PARTITION" "$efidirectory"
+#mkfs.fat -F 32 "$BOOT_PARTITION"
 
 
 # Проверяем созданные нами разделы 
@@ -102,15 +106,17 @@ clear
 
 # Выбор ядра Linux и его установка
 #echo "1 - linux-lts   2 - linux-zen   3 - linux-xanmod   4 - linux-lqx"
-echo "1 - linux-lts   2 - linux-zen"
+echo "1 - linux   2 - linux-lts   3 - linux-zen"
 echo -n "Выберите ядро для установки: "
 read KERNEL
 
 echo "Идет установка ядра..."
-if [[ $KERNEL == 1 ]] || [[ $KERNEL == linux-lts ]] || [[ $KERNEL == Linux-lts ]] || [[ $KERNEL == LINUX-LTS ]]; then
+if [[ $KERNEL == 2 ]] || [[ $KERNEL == linux-lts ]] || [[ $KERNEL == Linux-lts ]] || [[ $KERNEL == LINUX-LTS ]]; then
   pacstrap /mnt base base-devel linux-firmware linux-lts linux-lts-headers
-elif [[ $KERNEL == 2 ]] || [[ $KERNEL == linux-zen ]] || [[ $KERNEL == Linux-zen ]] || [[ $KERNEL == LINUX-ZEN ]]; then
+elif [[ $KERNEL == 3 ]] || [[ $KERNEL == linux-zen ]] || [[ $KERNEL == Linux-zen ]] || [[ $KERNEL == LINUX-ZEN ]]; then
   pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers
+elif [[ $KERNEL == 1 ]] || [[ $KERNEL == linux ]] || [[ $KERNEL == Linux ]] || [[ $KERNEL == LINUX ]]; then
+  pacstrap /mnt base base-devel linux-firmware linux linux-headers
 #elif [[ $KERNEL == 3 ]] || [[ $KERNEL == linux-xanmod ]] || [[ $KERNEL == Linux-xanmod ]] || [[ $KERNEL == LINUX-XANMOD ]]; then
 #  pacman -Sy --needed --noconfirm
 #  pacstrap /mnt base base-devel linux-xanmod linux-xanmod-headers
@@ -129,10 +135,13 @@ chmod +x /mnt/post_archinstall.sh
 arch-chroot /mnt ./post_archinstall.sh
 
 
+#umount -R /mnt
+#echo "Система будет перезагружена через 10 сек."
+#sleep 10
+#reboot
+
 #part2
-echo "Система будет перезагружена через 10 сек."
-sleep 10
-reboot
+
 # Устанавливаем язык и часовой пояс
 echo $'\nИдет настройка локалей...'
 echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
