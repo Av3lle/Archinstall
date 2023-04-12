@@ -62,11 +62,11 @@ read FILE_SYSTEM
 clear
 
 lsblk
-echo -n "Выберите корневой раздел (Например: /dev/sda1): "
-read ROOT_PARTITION
-
 echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
 read BOOT_PARTITION
+
+echo -n "Выберите корневой раздел (Например: /dev/sda2): "
+read ROOT_PARTITION
 
 mkfs.vfat -F32 "$BOOT_PARTITION"
 if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
@@ -84,8 +84,10 @@ fi
 
 # Монтируем корневой раздел + создаем каталоги
 mkdir /mnt/boot
+sleep 2
 mkdir /mnt/boot/efi
 mount "$ROOT_PARTITION" /mnt
+sleep 2
 mount "$BOOT_PARTITION" /mnt/boot/efi
 
 #efidirectory="/boot/efi/"
@@ -128,6 +130,9 @@ fi
 # Генерируем файл fstab
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
+clear
+lsblk
+sleep 5
 
 clear
 sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
@@ -163,7 +168,14 @@ pacman -S --needed --noconfirm networkmanager iwd nano
 systemctl enable NetworkManager
 
 # Устанавливаем загрузчик
+clear
+lsblk
 echo "Идет настройка загрузчика..."
+read BOOOT
+mount "$BOOOT" /mnt/boot/efi
+clear
+lsblk
+sleep 3
 
 pacman -S --needed --noconfirm grub efibootmgr
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable
