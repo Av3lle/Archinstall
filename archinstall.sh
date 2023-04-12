@@ -83,10 +83,10 @@ fi
 
 
 # Монтируем корневой раздел + создаем каталоги
+mount "$ROOT_PARTITION" /mnt
 mkdir /mnt/boot
 sleep 2
 mkdir /mnt/boot/efi
-mount "$ROOT_PARTITION" /mnt
 sleep 2
 mount "$BOOT_PARTITION" /mnt/boot/efi
 
