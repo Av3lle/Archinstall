@@ -172,7 +172,7 @@ clear
 lsblk
 echo "Идет настройка загрузчика..."
 read BOOOT
-mount "$BOOOT" /mnt/boot/efi
+mount "$BOOOT" /boot/efi
 clear
 lsblk
 sleep 3
