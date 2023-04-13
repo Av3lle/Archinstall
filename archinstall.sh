@@ -9,11 +9,25 @@ fi
 
 pacman -Sy --needed --noconfirm archlinux-keyring
 
+
 # Обновляем системные часы
 timedatectl set-ntp true
 clear
 
 
+# Приветствие 
+cat <<EOF
+       /\\
+      /  \\          Arch Linux installation script by Avelle
+     /\\   \\      Written by Avelle (https://github.com/Av3lle)
+    /  ..  \\              Telegram (@STANISLAWSKIY9)
+   /  '  '  \\
+  / ..'  '.. \\
+ /_\`        \`_\\
+EOF
+
+
+# Выбираем диск для установки
 lsblk
 echo -n "Выберите диск для установки (Например: /dev/nvme0n1): "
 read DRIVE
@@ -37,6 +51,7 @@ else
 fi
 
 
+# Выбираем тип файловой системы
 clear
 echo "Выберите тип файловой сисетемы: "
 echo "1 - ext4   2 - btrfs   3 - xfs"
@@ -67,9 +82,7 @@ fi
 # Монтируем корневой раздел + создаем каталоги
 mount "$ROOT_PARTITION" /mnt
 mkdir /mnt/boot
-sleep 2
 mkdir /mnt/boot/efi
-sleep 2
 mount "$BOOT_PARTITION" /mnt/boot/efi
 
 
@@ -103,21 +116,196 @@ fi
 
 
 # Генерируем файл fstab
+clear
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
 clear
+cat < /etc/fstasb
+sleep 5
 lsblk
 sleep 5
-
 clear
+
+
+# Исполнение скрипта в chroot начиная с part2
 sed '1,/^#part2$/d' archinstall.sh > /mnt/post_archinstall.sh
 chmod +x /mnt/post_archinstall.sh
 arch-chroot /mnt ./post_archinstall.sh 1
 
+
 #part2
 
 if [[ $1 = 1 ]]; then
-  :
+  # Устанавливаем язык
+  echo $'\nИдет настройка локалей...'
+  echo $'en_US.UTF-8 UTF-8\nru_RU.UTF-8 UTF-8' > /etc/locale.gen
+
+  locale-gen
+
+  echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
+  echo $'KEYMAP=ru\nFONT=cyr-sun16' > /etc/vconsole.conf
+
+
+  # Настройка даты и времении
+  echo $'\nИдет настройка даты и времени, по умолчанию МСК...'
+  ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+  hwclock --systohc --utc
+  sleep 2
+
+
+  # Устанавливаем и настраиваем сеть
+  echo "Идет настройка сети..."
+  pacman -S --needed --noconfirm networkmanager iwd nano
+  systemctl enable NetworkManager
+
+
+  # Устанавливаем загрузчик
+  clear
+  echo "Идет настройка загрузчика..."
+  lsblk
+
+  pacman -S --needed --noconfirm grub efibootmgr
+  grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable
+  grub-mkconfig -o /boot/grub/grub.cfg
+  sleep 5
+  clear
+
+
+  # Создание пароля для root
+  echo "Введите пароль для вашего root пользователя: "
+  passwd
+  sleep 2
+  clear
+
+
+  # Создание пользователя, назначение пароля и выдача привелегий
+  echo -n "Введите желаемое имя компьютера: "
+  read HOSTNAME
+  echo $HOSTNAME > /etc/hostname
+
+  echo -n "Введите желаемое имя пользователя: "
+  read USERNAME
+  useradd -m -g users -G wheel,audio,video $USERNAME
+
+  echo "Введите пароль для пользователя $USERNAME"
+  passwd $USERNAME
+  sleep 2
+
+  echo "Выдача привелегий для $USERNAME и группе wheel!"
+  echo "$USERNAME ALL=(ALL) ALL" >> /etc/sudoers.d/$USERNAME
+  echo $'\n%wheel ALL=(ALL:ALL) ALL' >> /etc/sudoers
+  sleep 2
+  clear
+
+  echo "Идет настройка файла /etc/hosts"
+  echo "127.0.0.1       localhost" >> /etc/hosts
+  echo "::1             localhost" >> /etc/hosts
+  echo "127.0.1.1       $HOSTNAME" >> /etc/hosts
+  cat < /etc/hosts
+  sleep 4
+
+  # Установка intel-amd ucode
+  #echo "Идет установка Intel-AMD ucode"
+  #pacman -S --needed --noconfirm intel-ucode amd-ucode
+  #sleep 2
+  #clear
+
+  clear
+  cpu=$(cat /proc/cpuinfo | grep -m 1 "model name" | cut -c 14)
+  if [[ $cpu == A ]]; then
+    echo "Идет установка amd-ucode..."
+    pacman -S --needed --noconfirm adm-ucode
+  else
+    echo "Идет установка intel-ucode..."
+    pacman -S --needed --noconfirm intel-ucode
+  fi
+  echo "Пересобираем образы initramfs..."
+  sudo mkinitcpio -P
+  sudo grub-mkconfig -o /boot/grub/grub.cfg
+  sleep 4
+  clear
+
+  # Установка звукового драйвера
+  echo "1 - PulseAudio   2 - PipeWire   3 - Alsa"
+  echo -n "Выберите звуковой драйвер: "
+  read AUDIO_DRIVER
+
+  if [[ $AUDIO_DRIVER == 1 ]] || [[ $AUDIO_DRIVER == pulse ]] || [[ $AUDIO_DRIVER == Pulse ]] || [[ $AUDIO_DRIVER == PULSE ]]; then
+    echo "Идет установка PulseAudio"
+    pacman -S --needed --noconfirm PulseAudio pavucontrol
+  elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
+    echo "Идет установка PipeWire"
+    pacman -S --needed --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol
+    systemctl --user enable --now pipewire.socket
+    systemctl --user enable --now pipewire-pulse.socket
+    systemctl --user enable --now wireplumber.service
+  elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
+    echo "Идет установка alsa-utils"
+    pacman -S --needed --noconfirm alsa-utils pavucontrol
+  else
+    echo "Произошла ошибка! Выбран звуковой драйвер Alsa"
+  fi
+  sleep 3
+  clear
+
+
+  # Установка графического окружения и сервера отображения Xorg
+  #echo -n "Хотите установить рабочее окружение? (Y/n): "
+  echo $'1 - DE \n2 - WM \n3 - No desktop'
+  echo -n "Выберите рабочее окружение: "
+  read DESKTOP
+
+  if [[ $DESKTOP == 1 ]] || [[ $DESKTOP == de ]] || [[ $DESKTOP == DE ]]; then
+    echo "1 - Gnome   2 - KDE   3 - KDE (Minimal)   4 - Xfce   5 - Xfce (Minimal)"
+    echo "Выберите графической окружение из перечисленных: "
+    read DE
+    pacman -S --needed --noconfirm xorg xorg-server
+    if [[ $DE == 1 ]] || [[ $DE == gnome ]] || [[ $DE == Gnome ]] || [[ $DE == GNOME ]]; then
+      pacman -S --needed --noconfirm gnome
+      systemctl enable gdm.service
+    elif [[ $DE == 2 ]] || [[ $DE == kde ]] || [[ $DE == Kde ]] || [[ $DE == KDE ]]; then
+      pacman -S --needed --noconfirm plasma plasma-wayland-session kde-applications
+      systemctl enable sddm.service
+    elif [[ $DE == 3 ]] || [[ $DE == kde_minimal ]] || [[ $DE == Kde_minimal ]] || [[ $DE == KDE_MINIMAL ]]; then
+      pacman -S --needed --noconfirm plasma plasma-wayland-session konsole dolphin
+      systemctl enable sddm.service
+    elif [[ $DE == 4 ]] || [[ $DE == xfce ]] || [[ $DE == Xfce ]] || [[ $DE == XFCE ]]; then
+      pacman -S --needed --noconfirm xfce4 xfce4-goodies lightdm lightdm-gtk-greeter
+      systemctl enable lightdm.service
+    elif [[ $DE == 5 ]] || [[ $DE == xfce_minimal ]] || [[ $DE == Xfce_minimal ]] || [[ $DE == XFCE_MINIMAL ]]; then
+      pacman -S --needed --noconfirm xfce4 thunar mousepad xfce4-terminal lightdm lightdm-gtk-greeter
+      systemctl enable lightdm.service
+    else
+      echo "Произошла ошибка. Был выбран вариант без рабочего окружения."
+    fi
+  elif [[ $DESKTOP == 2 ]] || [[ $DESKTOP == wm ]] || [[ $DESKTOP == WM ]]; then
+    echo "1 - i3   2 - bspwm   3 - openbox   4 - xmonad   5 - awesome"
+    echo "Выберите оконный менеджер из перечисленных: "
+    read WM
+    pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
+    systemctl enable lightdm.service
+    sleep 2
+    pacman -S --needed --noconfirm alacritty ranger neovim vim dmenu thunar firefox
+    if [[ $WM == 1 ]] || [[ $WM == i3 ]] || [[ $WM == I3 ]]; then
+      pacman -S --needed --noconfirm i3
+    elif [[ $WM == 2 ]] || [[ $WM == bspwm ]] || [[ $WM == Bspwm ]] || [[ $WM == BSPWM ]]; then
+      pacman -S --needed --noconfirm bspwm
+    elif [[ $WM == 3 ]] || [[ $WM == openbox ]] || [[ $WM == Openbox ]] || [[ $WM == OPENBOX ]]; then
+      pacman -S --needed --noconfirm openbox
+    elif [[ $WM == 4 ]] || [[ $WM == xmonad ]] || [[ $WM == Xmonad ]] || [[ $WM == XMONAD ]]; then
+      pacman -S --needed --noconfirm xmonad
+    elif [[ $WM == 5 ]] || [[ $WM == awesome ]] || [[ $WM == Awesome ]] || [[ $WM == AWESOME ]]; then
+      pacman -S --needed --noconfirm awesome
+    else
+      echo "Произошла ошибка. На вашу систему будет установлен i3"
+      pacman -S --needed --noconfirm i3
+      sleep 2
+    fi
+  else
+    :
+  fi
+  sleep 4
+  exit
 else
   umount -R /mnt
   clear 
@@ -127,137 +315,8 @@ else
 fi
 
 
-# Устанавливаем язык и часовой пояс
-echo $'\nИдет настройка локалей...'
-echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
-echo "ru_RU.UTF-8 UTF-8" > /etc/locale.gen
 
-locale-gen
-
-echo "LANG=en_US.UTF-8" > /etc/locale.conf
-echo "LANG=ru_RU.UTF-8" > /etc/locale.conf
-
-echo $'\nИдет настройка даты и времени, по умолчанию МСК...'
-ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-hwclock --systohc --utc
-sleep 2
-
-# Устанавливаем и настраиваем сеть
-echo "Идет настройка сети..."
-pacman -S --needed --noconfirm networkmanager iwd nano
-systemctl enable NetworkManager
-
-# Устанавливаем загрузчик
-clear
-echo "Идет настройка загрузчика..."
-lsblk
-sleep 3
-
-pacman -S --needed --noconfirm grub efibootmgr
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=GRUB --removable
-grub-mkconfig -o /boot/grub/grub.cfg
-sleep 2
-clear
-
-
-# Создание пароля для root
-echo "Введите пароль для вашего root пользователя: "
-passwd
-sleep 2
-clear
-
-
-# Создание пользователя, назначение пароля и выдача привелегий
-echo -n "Введите желаемое имя компьютера: "
-read HOSTNAME
-echo $HOSTNAME > /etc/hostname
-
-echo -n "Введите желаемое имя пользователя: "
-read USERNAME
-useradd -m -g users -G wheel,audio,video $USERNAME
-
-echo "Введите пароль для пользователя $USERNAME"
-passwd $USERNAME
-sleep 2
-
-echo "Выдача привелегий для $USERNAME и группе wheel!"
-echo "$USERNAME ALL=(ALL) ALL" >> /etc/sudoers.d/$USERNAME
-echo $'\n%wheel ALL=(ALL:ALL) ALL' >> /etc/sudoers
-sleep 2
-clear
-
-echo "Идет настройка файла /etc/hosts"
-echo "127.0.0.1       localhost" >> /etc/hosts
-echo "::1             localhost" >> /etc/hosts
-echo "127.0.1.1       $HOSTNAME" >> /etc/hosts
-sleep 2
-
-# Установка intel-amd ucode
-echo "Идет установка Intel-AMD ucode"
-pacman -S --needed --noconfirm intel-ucode amd-ucode
-sleep 2
-clear
-
-
-# Установка графического окружения и сервера отображения Xorg
-#echo -n "Хотите установить рабочее окружение? (Y/n): "
-echo $'1 - DE \n2 - WM \n3 - No desktop'
-echo -n "Выберите рабочее окружение: "
-read DESKTOP
-
-if [[ $DESKTOP == 1 ]] || [[ $DESKTOP == de ]] || [[ $DESKTOP == DE ]]; then
-  echo "1 - Gnome   2 - KDE   3 - KDE (Minimal)   4 - Xfce   5 - Xfce (Minimal)"
-  echo "Выберите графической окружение из перечисленных: "
-  read DE
-  pacman -S --needed --noconfirm xorg xorg-server
-  if [[ $DE == 1 ]] || [[ $DE == gnome ]] || [[ $DE == Gnome ]] || [[ $DE == GNOME ]]; then
-    pacman -S --needed --noconfirm gnome
-    systemctl enable gdm.service
-  elif [[ $DE == 2 ]] || [[ $DE == kde ]] || [[ $DE == Kde ]] || [[ $DE == KDE ]]; then
-    pacman -S --needed --noconfirm plasma plasma-wayland-session kde-applications
-    systemctl enable sddm.service
-  elif [[ $DE == 3 ]] || [[ $DE == kde_minimal ]] || [[ $DE == Kde_minimal ]] || [[ $DE == KDE_MINIMAL ]]; then
-    pacman -S --needed --noconfirm plasma plasma-wayland-session konsole dolphin
-    systemctl enable sddm.service
-  elif [[ $DE == 4 ]] || [[ $DE == xfce ]] || [[ $DE == Xfce ]] || [[ $DE == XFCE ]]; then
-    pacman -S --needed --noconfirm xfce4 xfce4-goodies lightdm lightdm-gtk-greeter
-    systemctl enable lightdm.service
-  elif [[ $DE == 5 ]] || [[ $DE == xfce_minimal ]] || [[ $DE == Xfce_minimal ]] || [[ $DE == XFCE_MINIMAL ]]; then
-    pacman -S --needed --noconfirm xfce4 thunar mousepad xfce4-terminal lightdm lightdm-gtk-greeter
-    systemctl enable lightdm.service
-  else
-    echo "Произошла ошибка. Был выбран вариант без рабочего окружения."
-  fi
-elif [[ $DESKTOP == 2 ]] || [[ $DESKTOP == wm ]] || [[ $DESKTOP == WM ]]; then
-  echo "1 - i3   2 - bspwm   3 - openbox   4 - xmonad   5 - awesome"
-  echo "Выберите оконный менеджер из перечисленных: "
-  read WM
-  pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
-  systemctl enable lightdm.service
-  sleep 2
-  pacman -S --needed --noconfirm alacritty ranger neovim vim dmenu thunar firefox
-  if [[ $WM == 1 ]] || [[ $WM == i3 ]] || [[ $WM == I3 ]]; then
-    pacman -S --needed --noconfirm i3
-  elif [[ $WM == 2 ]] || [[ $WM == bspwm ]] || [[ $WM == Bspwm ]] || [[ $WM == BSPWM ]]; then
-    pacman -S --needed --noconfirm bspwm
-  elif [[ $WM == 3 ]] || [[ $WM == openbox ]] || [[ $WM == Openbox ]] || [[ $WM == OPENBOX ]]; then
-    pacman -S --needed --noconfirm openbox
-  elif [[ $WM == 4 ]] || [[ $WM == xmonad ]] || [[ $WM == Xmonad ]] || [[ $WM == XMONAD ]]; then
-    pacman -S --needed --noconfirm xmonad
-  elif [[ $WM == 5 ]] || [[ $WM == awesome ]] || [[ $WM == Awesome ]] || [[ $WM == AWESOME ]]; then
-    pacman -S --needed --noconfirm awesome
-  else
-    echo "Произошла ошибка. На вашу системук будет установлен i3"
-    pacman -S --needed --noconfirm i3
-    sleep 2
-  fi
-else
-  :
-fi  
-
-# Выходим из установленной системы
-exit
-
+# Резервные строчки если будет какая-то ошибка
 # Отмонтируем разделы и перезагружаем систему
 umount -R /mnt
 clear
