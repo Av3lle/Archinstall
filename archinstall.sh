@@ -232,16 +232,14 @@ if [[ $1 = 1 ]]; then
 
   if [[ $AUDIO_DRIVER == 1 ]] || [[ $AUDIO_DRIVER == pulse ]] || [[ $AUDIO_DRIVER == Pulse ]] || [[ $AUDIO_DRIVER == PULSE ]]; then
     echo "Идет установка PulseAudio"
-    pacman -S --needed --noconfirm PulseAudio pavucontrol
+    pacman -S --needed --noconfirm pulseaudio pulseaudio-alsa pulseaudio-jack pavucontrol
   elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
     echo "Идет установка PipeWire"
     pacman -S --needed --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol
-    systemctl --user enable --now pipewire.socket
-    systemctl --user enable --now pipewire-pulse.socket
-    systemctl --user enable --now wireplumber.service
+    systemctl --user enable --now pipewire.service pipewire.socket pipewire-pulse.service wireplumber.service
   elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
-    echo "Идет установка alsa-utils"
-    pacman -S --needed --noconfirm alsa-utils pavucontrol
+    echo "Идет установка Alsa"
+    pacman -S --needed --noconfirm alsa-utils alsa-firmware alsa-card-profiles alsa-plugins pavucontrol
   else
     echo "Произошла ошибка! Выбран звуковой драйвер Alsa"
   fi
