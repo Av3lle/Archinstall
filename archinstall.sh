@@ -18,7 +18,7 @@ clear
 # Приветствие 
 cat <<EOF
        /\\
-      /  \\          Arch Linux installation script by Avelle
+      /  \\               Arch Linux installation script
      /\\   \\      Written by Avelle (https://github.com/Av3lle)
     /  ..  \\              Telegram (@STANISLAWSKIY9)
    /  '  '  \\
