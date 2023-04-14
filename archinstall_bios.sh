@@ -60,13 +60,13 @@ clear
 
 lsblk
 
-echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
-read BOOT_PARTITION
+#echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
+#read BOOT_PARTITION
 
 echo -n "Выберите корневой раздел (Например: /dev/sda2): "
 read ROOT_PARTITION
 
-mkfs.ext4 "$BOOT_PARTITION"
+#mkfs.ext4 "$BOOT_PARTITION"
 if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
   mkfs.ext4 "$ROOT_PARTITION"
 elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
@@ -179,6 +179,7 @@ if [[ $1 = 1 ]]; then
   lsblk
 
   pacman -S --needed --noconfirm grub
+  echo "Введите диск для установки grub (Например: /dev/sda)"
   read DRIVE_GRUB
   grub-install $DRIVE_GRUB
   grub-mkconfig -o /boot/grub/grub.cfg
