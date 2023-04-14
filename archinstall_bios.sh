@@ -59,6 +59,10 @@ read FILE_SYSTEM
 clear
 
 lsblk
+
+echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
+read BOOT_PARTITION
+
 echo -n "Выберите корневой раздел (Например: /dev/sda2): "
 read ROOT_PARTITION
 
@@ -77,7 +81,8 @@ fi
 
 # Монтируем корневой раздел + создаем каталоги
 mount "$ROOT_PARTITION" /mnt
-
+mkdir /mnt/boot
+mount "$BOOT_PARTITION" /mnt/boot
 
 # Запрашиваем у пользователя монтирование домашнего каталога в другой раздел
 echo -n "Хотите монтирвать домашний каталог на другой раздел? (Y/n): "
@@ -173,9 +178,9 @@ if [[ $1 = 1 ]]; then
   echo "Идет настройка загрузчика..."
   lsblk
 
-  pacman -S --needed --noconfirm grub efibootmgr
+  pacman -S --needed --noconfirm grub
   read DRIVE_GRUB
-  grub-install --target=i386-pc $DRIVE_GRUB
+  grub-install $DRIVE_GRUB
   grub-mkconfig -o /boot/grub/grub.cfg
   sleep 2
   clear
