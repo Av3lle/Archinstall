@@ -78,12 +78,27 @@ else
   mkfs.ext4 "$ROOT_PARTITION"
 fi
 
-
 # Монтируем корневой раздел + создаем каталоги
 mount "$ROOT_PARTITION" /mnt
 mkdir /mnt/boot
 mkdir /mnt/boot/efi
 mount "$BOOT_PARTITION" /mnt/boot/efi
+
+
+# Запрашиваем у пользователя монтирование домашнего каталога в другой раздел
+echo -n "Хотите монтирвать домашний каталог на другой раздел? (Y/n): "
+read HOME
+
+if [[ $HOME == Y ]] || [[ $HOME == yes ]] || [[ $HOME == Yes ]] || [[ $HOME == YES ]] || [[ $HOME == y ]] || [[ $HOME == д ]] || [[ $HOME == да ]] || [[ $HOME == Да ]] || [[ $HOME == ДА ]]; then
+  echo -n "Укажите раздел для монтирвания (Например: /dev/sda3): "
+  read HOME_PARTITION
+  echo "Идет монтирвание '/home' в дургой раздел..."
+  mkdir /mnt/home
+  mount "$HOME_PARTITION" /mnt/home
+  sleep 2
+else
+  :
+fi
 
 
 # Проверяем созданные нами разделы 
