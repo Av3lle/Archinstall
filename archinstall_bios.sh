@@ -82,7 +82,7 @@ fi
 # Монтируем корневой раздел + создаем каталоги
 mount "$ROOT_PARTITION" /mnt
 mkdir /mnt/boot
-mount "$BOOT_PARTITION" /mnt/boot
+#mount "$BOOT_PARTITION" /mnt/boot
 
 # Запрашиваем у пользователя монтирование домашнего каталога в другой раздел
 echo -n "Хотите монтирвать домашний каталог на другой раздел? (Y/n): "
