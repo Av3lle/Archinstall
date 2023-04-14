@@ -134,7 +134,7 @@ clear
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
 clear
-cat < /etc/fstab
+cat < /mnt/etc/fstab
 sleep 5
 lsblk
 sleep 5
