@@ -179,7 +179,7 @@ if [[ $1 = 1 ]]; then
   lsblk
 
   pacman -S --needed --noconfirm grub
-  echo "Введите диск для установки grub (Например: /dev/sda)"
+  echo -n "Введите диск для установки grub (Например: /dev/sda)"
   read DRIVE_GRUB
   grub-install $DRIVE_GRUB
   grub-mkconfig -o /boot/grub/grub.cfg
