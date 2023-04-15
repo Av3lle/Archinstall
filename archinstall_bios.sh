@@ -32,8 +32,8 @@ lsblk
 echo -n "Выберите диск для установки (Например: /dev/nvme0n1): "
 read DRIVE
 
-echo "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
 echo "1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk"
+echo -n "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
 read PARTITION_UTIL
 
 if [[ $PARTITION_UTIL == 1 ]] || [[ $PARTITION_UTIL == fdisk ]] || [[ $PARTITION_UTIL == Fdisk ]] || [[ $PARTITION_UTIL == FDISK ]]; then
@@ -179,7 +179,7 @@ if [[ $1 = 1 ]]; then
   lsblk
 
   pacman -S --needed --noconfirm grub
-  echo -n "Введите диск для установки grub (Например: /dev/sda)"
+  echo -n "Введите диск для установки grub (Например: /dev/sda): "
   read DRIVE_GRUB
   grub-install $DRIVE_GRUB
   grub-mkconfig -o /boot/grub/grub.cfg
@@ -253,7 +253,7 @@ if [[ $1 = 1 ]]; then
     echo "Идет установка PipeWire"
     pacman -S --needed --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol
     systemctl --user enable --now pipewire.service pipewire.socket pipewire-pulse.service wireplumber.service
-  elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
+  elif [[ $AUDIO_DRIVER == 3 ]] || [[ $AUDIO_DRIVER == alsa ]] || [[ $AUDIO_DRIVER == Alsa ]] || [[ $AUDIO_DRIVER == ALSA ]]; then
     echo "Идет установка Alsa"
     pacman -S --needed --noconfirm alsa-utils alsa-firmware alsa-card-profiles alsa-plugins pavucontrol
   else
@@ -265,13 +265,13 @@ if [[ $1 = 1 ]]; then
 
   # Установка графического окружения и сервера отображения Xorg
   #echo -n "Хотите установить рабочее окружение? (Y/n): "
-  echo $'1 - DE \n2 - WM \n3 - No desktop'
+  echo "1 - DE   2 - WM   3 - No desktop"
   echo -n "Выберите рабочее окружение: "
   read DESKTOP
 
   if [[ $DESKTOP == 1 ]] || [[ $DESKTOP == de ]] || [[ $DESKTOP == DE ]]; then
     echo "1 - Gnome   2 - KDE   3 - KDE (Minimal)   4 - Xfce   5 - Xfce (Minimal)"
-    echo "Выберите графической окружение из перечисленных: "
+    echo -n "Выберите графической окружение из перечисленных: "
     read DE
     pacman -S --needed --noconfirm xorg xorg-server
     if [[ $DE == 1 ]] || [[ $DE == gnome ]] || [[ $DE == Gnome ]] || [[ $DE == GNOME ]]; then
@@ -299,7 +299,7 @@ if [[ $1 = 1 ]]; then
     pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
     systemctl enable lightdm.service
     sleep 2
-    pacman -S --needed --noconfirm alacritty ranger neovim vim dmenu thunar firefox
+    pacman -S --needed --noconfirm xterm alacritty ranger neovim dmenu thunar firefox
     if [[ $WM == 1 ]] || [[ $WM == i3 ]] || [[ $WM == I3 ]]; then
       pacman -S --needed --noconfirm i3
     elif [[ $WM == 2 ]] || [[ $WM == bspwm ]] || [[ $WM == Bspwm ]] || [[ $WM == BSPWM ]]; then
