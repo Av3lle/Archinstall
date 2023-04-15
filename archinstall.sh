@@ -32,8 +32,8 @@ lsblk
 echo -n "Выберите диск для установки (Например: /dev/nvme0n1): "
 read DRIVE
 
-echo "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
 echo "1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk"
+echo -n "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
 read PARTITION_UTIL
 
 if [[ $PARTITION_UTIL == 1 ]] || [[ $PARTITION_UTIL == fdisk ]] || [[ $PARTITION_UTIL == Fdisk ]] || [[ $PARTITION_UTIL == FDISK ]]; then
@@ -135,7 +135,7 @@ clear
 echo "Идет генерация fstab"
 genfstab -U /mnt >> /mnt/etc/fstab
 clear
-cat < /etc/fstab
+cat < /mnt/etc/fstab
 sleep 5
 lsblk
 sleep 5
@@ -219,11 +219,6 @@ if [[ $1 = 1 ]]; then
   cat < /etc/hosts
   sleep 4
 
-  # Установка intel-amd ucode
-  #echo "Идет установка Intel-AMD ucode"
-  #pacman -S --needed --noconfirm intel-ucode amd-ucode
-  #sleep 2
-  #clear
 
   clear
   cpu=$(cat /proc/cpuinfo | grep -m 1 "model name" | cut -c 14)
@@ -252,7 +247,7 @@ if [[ $1 = 1 ]]; then
     echo "Идет установка PipeWire"
     pacman -S --needed --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol
     systemctl --user enable --now pipewire.service pipewire.socket pipewire-pulse.service wireplumber.service
-  elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
+  elif [[ $AUDIO_DRIVER == 3 ]] || [[ $AUDIO_DRIVER == alsa ]] || [[ $AUDIO_DRIVER == Alsa ]] || [[ $AUDIO_DRIVER == ALSA ]]; then
     echo "Идет установка Alsa"
     pacman -S --needed --noconfirm alsa-utils alsa-firmware alsa-card-profiles alsa-plugins pavucontrol
   else
@@ -298,7 +293,7 @@ if [[ $1 = 1 ]]; then
     pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
     systemctl enable lightdm.service
     sleep 2
-    pacman -S --needed --noconfirm alacritty ranger neovim vim dmenu thunar firefox
+    pacman -S --needed --noconfirm xterm alacritty ranger neovim dmenu thunar firefox
     if [[ $WM == 1 ]] || [[ $WM == i3 ]] || [[ $WM == I3 ]]; then
       pacman -S --needed --noconfirm i3
     elif [[ $WM == 2 ]] || [[ $WM == bspwm ]] || [[ $WM == Bspwm ]] || [[ $WM == BSPWM ]]; then
