@@ -312,10 +312,12 @@ if [[ $1 = 1 ]]; then
   else
     :
   fi
+  pacman -Scc --needed --noconfirm
   sleep 4
   exit
 else
   umount -R /mnt
+  rm -rf post_archinstall.sh
   clear 
   echo "Система будет перезагружена через 10 сек."
   sleep 10
@@ -326,9 +328,9 @@ fi
 
 # Резервные строчки если будет какая-то ошибка
 # Отмонтируем разделы и перезагружаем систему
-umount -R /mnt
-clear
+#umount -R /mnt
+#clear
 
-echo "Система будет перезагружена через 10 сек."
-sleep 10
-reboot
+#echo "Система будет перезагружена через 10 сек."
+#sleep 10
+#reboot
