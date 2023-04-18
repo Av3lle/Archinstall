@@ -29,7 +29,7 @@ EOF
 
 # Выбираем диск для установки
 lsblk
-echo -n "Выберите диск для установки (Например: /dev/nvme0n1): "
+echo -n "Выберите диск для установки (Например: nvme0n1): "
 read DRIVE
 
 echo "1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk"
@@ -37,13 +37,13 @@ echo -n "Выберите утилиту для того чтобы разбит
 read PARTITION_UTIL
 
 if [[ $PARTITION_UTIL == 1 ]] || [[ $PARTITION_UTIL == fdisk ]] || [[ $PARTITION_UTIL == Fdisk ]] || [[ $PARTITION_UTIL == FDISK ]]; then
-  fdisk $DRIVE
+  fdisk /dev/${DRIVE}
 elif [[ $PARTITION_UTIL == 2 ]] || [[ $PARTITION_UTIL == parted ]] || [[ $PARTITION_UTIL == Parted ]] || [[ $PARTITION_UTIL == PARTED ]]; then
-  parted $DRIVE
+  parted /dev/${DRIVE}
 elif [[ $PARTITION_UTIL == 3 ]] || [[ $PARTITION_UTIL == gdisk ]] || [[ $PARTITION_UTIL == Gdisk ]] || [[ $PARTITION_UTIL == GDISK ]]; then
-  gdisk $DRIVE
+  gdisk /dev/${DRIVE}
 elif [[ $PARTITION_UTIL == 4 ]] || [[ $PARTITION_UTIL == cfdisk ]] || [[ $PARTITION_UTIL == Cfdisk ]] || [[ $PARTITION_UTIL == CFDISK ]]; then
-  cfdisk $DRIVE
+  cfdisk /dev/${DRIVE}
 else
   echo "Произошла ошибка! Будет выбран cfdisk!"
   sleep 2
@@ -59,23 +59,23 @@ read FILE_SYSTEM
 clear
 
 lsblk
-echo -n "Выберите загрузочный раздел (Например: /dev/sda1): "
+echo -n "Выберите загрузочный раздел (Например: sda1): "
 read BOOT_PARTITION
 
-echo -n "Выберите корневой раздел (Например: /dev/sda2): "
+echo -n "Выберите корневой раздел (Например: sda2): "
 read ROOT_PARTITION
 
 mkfs.vfat -F32 "$BOOT_PARTITION"
 if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
-  mkfs.ext4 "$ROOT_PARTITION"
+  mkfs.ext4 /dev/${ROOT_PARTITION}
 elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
-  mkfs.btrfs "$ROOT_PARTITION"
+  mkfs.ext4 /dev/${ROOT_PARTITION}
 elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
-   mkfs.xfs "$ROOT_PARTITION"
+  mkfs.ext4 /dev/${ROOT_PARTITION}
 else
   echo "Произошла ошибка! Будет выбран ext4!"
   sleep 2
-  mkfs.ext4 "$ROOT_PARTITION"
+  mkfs.ext4 mkfs.ext4 /dev/${ROOT_PARTITION}
 fi
 
 # Монтируем корневой раздел + создаем каталоги
@@ -90,11 +90,11 @@ echo -n "Хотите монтирвать домашний каталог на 
 read HOME
 
 if [[ $HOME == Y ]] || [[ $HOME == yes ]] || [[ $HOME == Yes ]] || [[ $HOME == YES ]] || [[ $HOME == y ]] || [[ $HOME == д ]] || [[ $HOME == да ]] || [[ $HOME == Да ]] || [[ $HOME == ДА ]]; then
-  echo -n "Укажите раздел для монтирвания (Например: /dev/sda3): "
+  echo -n "Укажите раздел для монтирвания (Например: sda3): "
   read HOME_PARTITION
   echo "Идет монтирвание '/home' в дургой раздел..."
   mkdir /mnt/home
-  mount "$HOME_PARTITION" /mnt/home
+  mount /dev/${HOME_PARTITION} /mnt/home
   sleep 2
 else
   :
@@ -218,9 +218,10 @@ if [[ $1 = 1 ]]; then
   echo "127.0.1.1       $HOSTNAME" >> /etc/hosts
   cat < /etc/hosts
   sleep 4
-
-
   clear
+
+  
+  # Установка micro-code
   cpu=$(cat /proc/cpuinfo | grep -m 1 "model name" | cut -c 14)
   if [[ $cpu == A ]]; then
     echo "Идет установка amd-ucode..."
@@ -312,7 +313,44 @@ if [[ $1 = 1 ]]; then
   else
     :
   fi
+  
+  
+  # Установка yay, gamemode, mangohud, goverlay
+  echo -n "Хотите установить пакеты для игр? (Y/n): "
+  read GAMES_PACKAGE
+  if [[ $GAMES_PACKAGE == y ]] || [[ $GAMES_PACKAGE == Y ]] || [[ $GAMES_PACKAGE == yes ]] || [[ $GAMES_PACKAGE == YES ]] || [[ $GAMES_PACKAGE == Yes ]]; then
+    echo "Идет установка gamemode..."
+    pacman -S --needed --noconfirm gamemode
+
+    echo "Идет установка yay..."
+    pacman -S --needed --noconfirm git
+    git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -sri && cd .. && rm -rf yay
+
+    echo "Идет установка mangohud-git и goverlay-git..."
+    yay -S --needed --noconfirm mangohud-git goverlay-git
+    sleep 4
+  else
+    :
+  fi
+  clear
+
+
+  # Установка доп. пакетов по желанию пользователя
+  echo -n "Хотите установить доп. пакеты в систему? (Y/n): "
+  read CUSTOM_PACK
+  if [[ $CUSTOM_PACK == y ]] || [[ $CUSTOM_PACK == Y ]] || [[ $CUSTOM_PACK == yes ]] || [[ $CUSTOM_PACK == YES ]] || [[ $CUSTOM_PACK == Yes ]]; then
+    echo -n "Впишите пакеты через пробел, которые хотите установить: "
+    read PACK
+    pacman -S --needed --noconfirm $PACK
+    sleep 4
+  else
+    :
+  fi
+
+
+  clear
   pacman -Scc --needed --noconfirm
+  yay -Scc --needed --noconfirm
   sleep 4
   exit
 else
@@ -323,14 +361,3 @@ else
   sleep 10
   reboot
 fi
-
-
-
-# Резервные строчки если будет какая-то ошибка
-# Отмонтируем разделы и перезагружаем систему
-#umount -R /mnt
-#clear
-
-#echo "Система будет перезагружена через 10 сек."
-#sleep 10
-#reboot
