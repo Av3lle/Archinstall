@@ -351,7 +351,7 @@ sed -i "$(($CFLAGSline+1)),$i d" $fileName
   read DESKTOP
 
   if [[ $DESKTOP == 1 ]] || [[ $DESKTOP == de ]] || [[ $DESKTOP == DE ]]; then
-    echo "1 - Gnome   2 - KDE   3 - KDE (Minimal)   4 - Xfce   5 - Xfce (Minimal)"
+    echo "1 - Gnome   2 - Gnome (minimal)   3 - KDE   4 - KDE (Minimal)   5 - Xfce   6 - Xfce (Minimal)"
     echo "Выберите графической окружение из перечисленных: "
     read DE
     pacman -S --needed --noconfirm xorg xorg-server firefox
