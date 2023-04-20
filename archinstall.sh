@@ -51,7 +51,7 @@ lsblk
 echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
 read DRIVE
 
-echo "1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk"
+echo $'\n1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk'
 echo -n "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
 read PARTITION_UTIL
 
