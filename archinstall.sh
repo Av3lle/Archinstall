@@ -274,8 +274,8 @@ if [[ $1 = 1 ]]; then
       break
     fi
   }
-sed -i "s/CFLAGS=.*/CFLAGS=$flags/" $fileName
-sed -i "$(($CFLAGSline+1)),$i d" $fileName
+  sed -i "s/CFLAGS=.*/CFLAGS=$flags/" $fileName
+  sed -i "$(($CFLAGSline+1)),$i d" $fileName
 
 
   # Установка micro-code
