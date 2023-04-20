@@ -98,10 +98,10 @@ else
 fi
 
 # Монтируем корневой раздел + создаем каталоги
-mount "$ROOT_PARTITION" /mnt
+mount /dev/${ROOT_PARTITION} /mnt
 mkdir /mnt/boot
 mkdir /mnt/boot/efi
-mount "$BOOT_PARTITION" /mnt/boot/efi
+mount /dev/${BOOT_PARTITION} /mnt/boot/efi
 
 
 # Запрашиваем у пользователя монтирование домашнего каталога в другой раздел
