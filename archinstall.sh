@@ -30,12 +30,18 @@ clear
 # Приветствие 
 cat <<EOF
        /\\
-      /  \\               Arch Linux installation script
-     /\\   \\      Written by Avelle (https://github.com/Av3lle)
+      /  \\                   Установка Arch Linux 
+     /\\   \\      Скрипт писал Avelle (https://github.com/Av3lle)
     /  ..  \\              Telegram (@STANISLAWSKIY9)
    /  '  '  \\
   / ..'  '.. \\
  /_\`        \`_\\
+
+
+                                  Wrning!!!
+              Установка производится исключительно на UEFI, EFI
+
+
 
 EOF
 
@@ -135,11 +141,6 @@ elif [[ $KERNEL == 3 ]] || [[ $KERNEL == linux-zen ]] || [[ $KERNEL == Linux-zen
   pacstrap /mnt base base-devel linux-firmware linux-zen linux-zen-headers
 elif [[ $KERNEL == 1 ]] || [[ $KERNEL == linux ]] || [[ $KERNEL == Linux ]] || [[ $KERNEL == LINUX ]]; then
   pacstrap /mnt base base-devel linux-firmware linux linux-headers
-#elif [[ $KERNEL == 3 ]] || [[ $KERNEL == linux-xanmod ]] || [[ $KERNEL == Linux-xanmod ]] || [[ $KERNEL == LINUX-XANMOD ]]; then
-#  pacman -Sy --needed --noconfirm
-#  pacstrap /mnt base base-devel linux-xanmod linux-xanmod-headers
-#elif [[ $KERNEL == 4 ]] || [[ $KERNEL == linux-lqx ]] || [[ $KERNEL == Linux-lqx ]] || [[ $KERNEL == LINUX-LQX ]]; then
-#  pacstrap /mnt base base-devel linux-lqx linux-lqx-headers
 fi
 
 
@@ -185,6 +186,7 @@ if [[ $1 = 1 ]]; then
   echo "Идет настройка сети..."
   pacman -S --needed --noconfirm networkmanager iwd nano
   systemctl enable NetworkManager
+  systemctl enable iwd.service
 
 
   # Устанавливаем загрузчик
@@ -233,7 +235,48 @@ if [[ $1 = 1 ]]; then
   sleep 4
   clear
 
-  
+
+  # Настройка reflector
+  echo "Идет настройка pacman..."
+  pacman -Syy reflector archlinux-keyring --noconfirm
+  reflector --sort rate -l 20 --save /etc/pacman.d/mirrorlist
+  pacman-mirrors --fasttrack
+  sleep 3
+  clear
+
+
+  # multilib rep enable
+  echo "Добавление multilib репозитория..."
+  sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+  sed -i s/'#ParallelDownloads = 5'/'ParallelDownloads = 5'/g /etc/pacman.conf
+  sed -i s/'#VerbosePkgLists'/'VerbosePkgLists'/g /etc/pacman.conf
+  sed -i s/'#Color'/'ILoveCandy'/g /etc/pacman.conf
+  sed -i s/'CheckSpace'/'#CheckSpace'/g /etc/pacman.conf
+  sed -i s/'#VerbosePkgLists'/'VerbosePkgLists'/g /etc/pacman.conf
+  sleep 2
+  clear
+
+
+  # Настройка makepkg
+  echo "Идет настройка makepkg..."
+  sed -i s/'CXXFLAGS="$CFLAGS -Wp,-D_GLIBCXX_ASSERTIONS"'/'CXXFLAGS="-march=native -mtune=native -O2 -pipe -fno-plt"'/g /etc/makepkg.conf
+  sed -i s/'#RUSTFLAGS="-C opt-level=2"'/'RUSTFLAGS="-C opt-level=2 -C target-cpu=native"'/g /etc/makepkg.conf
+  sed -i s/'MAKEFLAGS="-j2"'/'MAKEFLAGS="-j$(($(nproc)+1))"'/g /etc/makepkg.conf
+  sed -i s/'BUILDENV=(!distcc color !ccache check !sign)'/'BUILDENV=(!distcc color ccache check !sign)'/g /etc/makepkg.conf
+  fileName="/etc/makepkg.conf"
+  flags="\"-march=native -mtune=native -O2 -pipe -fno-plt\""
+
+  CFLAGSline=`grep -hnr "\"" $fileName | grep CFLAGS | cut -d ":" -f1 |head -n1`
+  for (( i=$CFLAGSline+1;i<`wc -l $fileName|cut -d " " -f1`;i++ )) {
+    output=`sed -n "$i p" $fileName`
+    if [[ `echo $output | grep "\""` ]];then
+      break
+    fi
+  }
+sed -i "s/CFLAGS=.*/CFLAGS=$flags/" $fileName
+sed -i "$(($CFLAGSline+1)),$i d" $fileName
+
+
   # Установка micro-code
   cpu=$(cat /proc/cpuinfo | grep -m 1 "model name" | cut -c 14)
   if [[ $cpu == A ]]; then
@@ -248,6 +291,7 @@ if [[ $1 = 1 ]]; then
   sudo grub-mkconfig -o /boot/grub/grub.cfg
   sleep 4
   clear
+
 
   # Установка звукового драйвера
   echo "1 - PulseAudio   2 - PipeWire   3 - Alsa"
@@ -271,8 +315,36 @@ if [[ $1 = 1 ]]; then
   clear
 
 
+  # Выбор видео драйвера
+  echo "1 - AMD   2 - Nvidia   3 - Intel"
+  echo -n "Выберите производителя вашей видеокарты для установки драйвера: "
+  read VIDEO_DRIVER
+  if [[ $VIDEO_DRIVER == 1 ]] || [[ $VIDEO_DRIVER == amd ]] || [[ $VIDEO_DRIVER == Amd ]] || [[ $VIDEO_DRIVER == AMD ]]; then
+    echo "Идет установка драйверов на AMD..."
+    pacman -S --needed --noconfirm xf86-video-ati xf86-video-amdgpu mesa mesa-demos lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader amdvlk lib32-amdvlk network-manager-applet
+  elif [[ $VIDEO_DRIVER == 2 ]] || [[ $VIDEO_DRIVER == nvidia ]] || [[ $VIDEO_DRIVER == Nvidia ]] || [[ $VIDEO_DRIVER == NVIDIA ]]; then
+    echo "1 - Проприетарный драйвер   2 - Open source драйвер"
+    echo -n "Выберите тип драйверов: "
+    read NVIDIA
+    if [[ $NVIDIA == 1 ]]; then
+      echo "Идет установка проприетарного драйвера..."
+      pacman -S --needed --noconfirm mesa mesa-demos lib32-mesa vulkan-icd-loader lib32-vulkan-icd-loader nvidia-dkms nvidia-utils lib32-nvidia-utils vulkan-icd-loader lib32-vulkan-icd-loader lib32-opencl-nvidia opencl-nvidia network-manager-applet nvidia-settings
+    elif [[ $NVIDIA == 2 ]]; then
+      echo "Идет установка Open source драйвера..."
+      pacman -S --needed --noconfirm mesa mesa-demos lib32-mesa vulkan-icd-loader lib32-vulkan-icd-loader xf86-video-nouveau nvidia-utils lib32-nvidia-utils vulkan-icd-loader lib32-vulkan-icd-loader lib32-opencl-nvidia opencl-nvidia network-manager-applet nvidia-settings
+    else
+      :
+    fi
+  elif [[ $VIDEO_DRIVER == 3 ]] || [[ $VIDEO_DRIVER == intel ]] || [[ $VIDEO_DRIVER == Intel ]] || [[ $VIDEO_DRIVER == INTEL ]]; then
+    pacman -S --needed --noconfirm mesa mesa-demos xf86-video-intel lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader network-manager-applet libva-intel-driver lib32-libva-intel-driver
+  else
+    :
+  fi
+  sleep 4
+  clear
+
+
   # Установка графического окружения и сервера отображения Xorg
-  #echo -n "Хотите установить рабочее окружение? (Y/n): "
   echo $'1 - DE \n2 - WM \n3 - No desktop'
   echo -n "Выберите рабочее окружение: "
   read DESKTOP
@@ -281,17 +353,20 @@ if [[ $1 = 1 ]]; then
     echo "1 - Gnome   2 - KDE   3 - KDE (Minimal)   4 - Xfce   5 - Xfce (Minimal)"
     echo "Выберите графической окружение из перечисленных: "
     read DE
-    pacman -S --needed --noconfirm xorg xorg-server
+    pacman -S --needed --noconfirm xorg xorg-server firefox
     if [[ $DE == 1 ]] || [[ $DE == gnome ]] || [[ $DE == Gnome ]] || [[ $DE == GNOME ]]; then
-      pacman -S --needed --noconfirm gnome
+      pacman -S --needed --noconfirm gnome gnome-extra gdm
       systemctl enable gdm.service
-    elif [[ $DE == 2 ]] || [[ $DE == kde ]] || [[ $DE == Kde ]] || [[ $DE == KDE ]]; then
+    elif [[ $DE == 2 ]] || [[ $DE == gnome_minimal ]] || [[ $DE == Gnome_minimal ]] || [[ $DE == GNOME_MINIMAL ]]; then
+      pacman -S --needed --noconfirm gnome nautilus gnome-terminal gdm
+      systemctl enable gdm.service
+    elif [[ $DE == 3 ]] || [[ $DE == kde ]] || [[ $DE == Kde ]] || [[ $DE == KDE ]]; then
       pacman -S --needed --noconfirm plasma plasma-wayland-session kde-applications
       systemctl enable sddm.service
-    elif [[ $DE == 3 ]] || [[ $DE == kde_minimal ]] || [[ $DE == Kde_minimal ]] || [[ $DE == KDE_MINIMAL ]]; then
+    elif [[ $DE == 4 ]] || [[ $DE == kde_minimal ]] || [[ $DE == Kde_minimal ]] || [[ $DE == KDE_MINIMAL ]]; then
       pacman -S --needed --noconfirm plasma plasma-wayland-session konsole dolphin
       systemctl enable sddm.service
-    elif [[ $DE == 4 ]] || [[ $DE == xfce ]] || [[ $DE == Xfce ]] || [[ $DE == XFCE ]]; then
+    elif [[ $DE == 5 ]] || [[ $DE == xfce ]] || [[ $DE == Xfce ]] || [[ $DE == XFCE ]]; then
       pacman -S --needed --noconfirm xfce4 xfce4-goodies lightdm lightdm-gtk-greeter
       systemctl enable lightdm.service
     elif [[ $DE == 5 ]] || [[ $DE == xfce_minimal ]] || [[ $DE == Xfce_minimal ]] || [[ $DE == XFCE_MINIMAL ]]; then
@@ -307,7 +382,7 @@ if [[ $1 = 1 ]]; then
     pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
     systemctl enable lightdm.service
     sleep 2
-    pacman -S --needed --noconfirm xterm alacritty ranger neovim dmenu thunar firefox
+    pacman -S --needed --noconfirm xterm alacritty dmenu thunar firefox
     if [[ $WM == 1 ]] || [[ $WM == i3 ]] || [[ $WM == I3 ]]; then
       pacman -S --needed --noconfirm i3
     elif [[ $WM == 2 ]] || [[ $WM == bspwm ]] || [[ $WM == Bspwm ]] || [[ $WM == BSPWM ]]; then
@@ -326,8 +401,8 @@ if [[ $1 = 1 ]]; then
   else
     :
   fi
-  
-  
+
+
   # Установка yay, gamemode, mangohud, goverlay
   echo -n "Хотите установить пакеты для игр? (Y/n): "
   read GAMES_PACKAGE
@@ -342,11 +417,29 @@ if [[ $1 = 1 ]]; then
     echo "Идет установка mangohud-git и goverlay-git..."
     yay -S --needed --noconfirm mangohud-git goverlay-git
     sleep 4
+
+    # Оптимизация OpenGL
+    echo "__GL_THREADED_OPTIMIZATIONS=1" >> /etc/environment
+    echo "MESA_GL_VERSION_OVERRIDE=4.5" >> /etc/environment
+    echo "MESA_GLSL_VERSION_OVERRIDE=450" >> /etc/environment
   else
     :
   fi
   clear
 
+
+  # Systemd
+  sed -i s/'#SystemMaxUse='/'SystemMaxUse=1'/g /etc/systemd/journald.conf
+  sed -i s/'#SystemMaxFileSize='/'SystemMaxFileSize=1'/g /etc/systemd/journald.conf
+  sed -i s/'#SystemMaxFiles=100'/'SystemMaxFiles=1'/g /etc/systemd/journald.conf
+  sed -i s/'#RuntimeMaxUse='/'RuntimeMaxUse=1'/g /etc/systemd/journald.conf
+  sed -i s/'#RuntimeMaxFileSize='/'RuntimeMaxFileSize=1'/g /etc/systemd/journald.conf
+  sed -i s/'#RuntimeMaxFiles=100'/'RuntimeMaxFiles=1'/g /etc/systemd/journald.conf
+  sed -i s/'#ForwardToSyslog=no'/'ForwardToSyslog=no'/g /etc/systemd/journald.conf
+  sed -i s/'#ForwardToWall=yes'/'ForwardToWall=yes'/g /etc/systemd/journald.conf
+  journalctl --vacuum-size=1M
+  journalctl --verify
+  clear
 
   # Установка доп. пакетов по желанию пользователя
   echo -n "Хотите установить доп. пакеты в систему? (Y/n): "
