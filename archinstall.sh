@@ -370,7 +370,7 @@ sed -i "$(($CFLAGSline+1)),$i d" $fileName
     elif [[ $DE == 5 ]] || [[ $DE == xfce ]] || [[ $DE == Xfce ]] || [[ $DE == XFCE ]]; then
       pacman -S --needed --noconfirm xfce4 xfce4-goodies lightdm lightdm-gtk-greeter
       systemctl enable lightdm.service
-    elif [[ $DE == 5 ]] || [[ $DE == xfce_minimal ]] || [[ $DE == Xfce_minimal ]] || [[ $DE == XFCE_MINIMAL ]]; then
+    elif [[ $DE == 6 ]] || [[ $DE == xfce_minimal ]] || [[ $DE == Xfce_minimal ]] || [[ $DE == XFCE_MINIMAL ]]; then
       pacman -S --needed --noconfirm xfce4 thunar mousepad xfce4-terminal lightdm lightdm-gtk-greeter
       systemctl enable lightdm.service
     else
