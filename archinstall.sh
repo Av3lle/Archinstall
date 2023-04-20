@@ -237,7 +237,7 @@ if [[ $1 = 1 ]]; then
 
 
   # Настройка reflector
-  echo "Идет настройка pacman..."
+  echo "Идет настройка зеркал..."
   pacman -Syy reflector archlinux-keyring --noconfirm
   reflector --sort rate -l 20 --save /etc/pacman.d/mirrorlist
   pacman-mirrors --fasttrack
@@ -253,6 +253,7 @@ if [[ $1 = 1 ]]; then
   sed -i s/'#Color'/'ILoveCandy'/g /etc/pacman.conf
   sed -i s/'CheckSpace'/'#CheckSpace'/g /etc/pacman.conf
   sed -i s/'#VerbosePkgLists'/'VerbosePkgLists'/g /etc/pacman.conf
+  pacman -Sy
   sleep 2
   clear
 
