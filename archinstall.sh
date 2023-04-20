@@ -282,7 +282,7 @@ sed -i "$(($CFLAGSline+1)),$i d" $fileName
   cpu=$(cat /proc/cpuinfo | grep -m 1 "model name" | cut -c 14)
   if [[ $cpu == A ]]; then
     echo "Идет установка amd-ucode..."
-    pacman -S --needed --noconfirm adm-ucode
+    pacman -S --needed --noconfirm amd-ucode
   else
     echo "Идет установка intel-ucode..."
     pacman -S --needed --noconfirm intel-ucode
