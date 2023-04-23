@@ -84,7 +84,7 @@ read BOOT_PARTITION
 echo -n "Выберите корневой раздел (Например: sda2): "
 read ROOT_PARTITION
 
-mkfs.vfat -F32 "$BOOT_PARTITION"
+mkfs.vfat -F32 /dev/${BOOT_PARTITION}
 if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
   mkfs.ext4 /dev/${ROOT_PARTITION}
 elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
