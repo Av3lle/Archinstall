@@ -312,7 +312,7 @@ if [[ $1 = 1 ]]; then
   else
     echo "Произошла ошибка! Выбран звуковой драйвер Alsa"
   fi
-  sleep 3
+  sleep 6
   clear
 
 
