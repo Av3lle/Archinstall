@@ -248,6 +248,9 @@ if [[ $1 = 1 ]]; then
   # multilib rep enable
   echo "Добавление multilib репозитория..."
   sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
+
+
+  # Настройка pacman.conf
   sed -i s/'#ParallelDownloads = 5'/'ParallelDownloads = 5'/g /etc/pacman.conf
   sed -i s/'#VerbosePkgLists'/'VerbosePkgLists'/g /etc/pacman.conf
   sed -i s/'#Color'/'ILoveCandy'/g /etc/pacman.conf
@@ -305,7 +308,7 @@ if [[ $1 = 1 ]]; then
   elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
     echo "Идет установка PipeWire"
     pacman -S --needed --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol
-    systemctl --user enable --now pipewire.service pipewire.socket pipewire-pulse.service wireplumber.service
+    systemctl enable --now pipewire.service pipewire.socket pipewire-pulse.service wireplumber.service
   elif [[ $AUDIO_DRIVER == 3 ]] || [[ $AUDIO_DRIVER == alsa ]] || [[ $AUDIO_DRIVER == Alsa ]] || [[ $AUDIO_DRIVER == ALSA ]]; then
     echo "Идет установка Alsa"
     pacman -S --needed --noconfirm alsa-utils alsa-firmware alsa-card-profiles alsa-plugins pavucontrol
