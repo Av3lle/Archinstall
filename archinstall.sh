@@ -58,7 +58,7 @@ if [[ $AUTO == 1 ]]; then
   read FILE_SYSTEM
 
 
-  parted /dev/${DRIVE} mklable gpt
+  parted /dev/${DRIVE} mklabel gpt
   parted /dev/${DRIVE} mkpart "EFI" fat32 1MiB 512MiB
   parted /dev/${DRIVE} set 1 esp on
   parted /dev/${DRIVE} mkpart "swap" linux-swap 512MiB 8GiB
