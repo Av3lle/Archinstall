@@ -51,35 +51,35 @@ lsblk
 if [[ $AUTO == 1 ]]; then
   # Выбор диска для автоматической установки 
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
-  read DRIVE
+  read DRIVE_AUTO
 
   echo $'\n1 - ext4   2 - btrfs   3 - xfs'
   echo -n 'Выберите тип файловой сисетемы: '
   read FILE_SYSTEM
 
 
-  parted --script /dev/${DRIVE} mklabel gpt
-  parted --script /dev/${DRIVE} mkpart "EFI system partition" fat32 1MiB 512MiB
-  parted --script /dev/${DRIVE} set 1 esp on
-  parted --script /dev/${DRIVE} mkpart "swap partition" linux-swap 512MiB 8GiB
+  parted --script /dev/${DRIVE_AUTO} mklabel gpt
+  parted --script /dev/${DRIVE_AUTO} mkpart "EFI system partition" fat32 1MiB 512MiB
+  parted --script /dev/${DRIVE_AUTO} set 1 esp on
+  parted --script /dev/${DRIVE_AUTO} mkpart "swap partition" linux-swap 512MiB 8GiB
 
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
-    parted --script /dev/${DRIVE} mkpart "root partition" ext4 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart "root partition" ext4 8GiB 100%
   elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
-    parted --script /dev/${DRIVE} mkpart "root partition" btrfs 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart "root partition" btrfs 8GiB 100%
   elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
-    parted --script /dev/${DRIVE} mkpart "root partition" xfs 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart "root partition" xfs 8GiB 100%
   else
     echo "Произошла ошибка! Будет выбран ext4!"
     sleep 2
-    parted --script /dev/${DRIVE} mkpart "root partition" ext4 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart "root partition" ext4 8GiB 100%
   fi
 
   # Монтирование и создание необходимых директорий
-  mount /dev/${DRIVE}3 /mnt
+  mount /dev/${DRIVE_AUTO}3 /mnt
   mkdir /mnt/boot
   mkdir /mnt/boot/efi
-  mount /dev/${DRIVE}1 /mnt/boot/efi
+  mount /dev/${DRIVE_AUTO}1 /mnt/boot/efi
 
   # Подключение swap раздела
   #mkswap /dev/${DRIVE}2
