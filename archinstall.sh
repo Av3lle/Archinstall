@@ -53,15 +53,15 @@ if [[ $AUTO == 1 ]]; then
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
   read DRIVE
 
-  echo '\nВыберите тип файловой сисетемы: '
-  echo -n '1 - ext4   2 - btrfs   3 - xfs'
+  echo '1 - ext4   2 - btrfs   3 - xfs'
+  echo -n $'\nВыберите тип файловой сисетемы: '
   read FILE_SYSTEM
 
 
-  parted --script /dev/${DRIVE} mklable gpt
-  parted --script /dev/${DRIVE} mkpart "EFI" fat32 1MiB 512MiB
-  parted --script /dev/${DRIVE} set 1 esp on
-  parted --script /dev/${DRIVE} mkpart "swap" linux-swap 512MiB 8GiB
+  parted /dev/${DRIVE} mklable gpt
+  parted /dev/${DRIVE} mkpart "EFI" fat32 1MiB 512MiB
+  parted /dev/${DRIVE} set 1 esp on
+  parted /dev/${DRIVE} mkpart "swap" linux-swap 512MiB 8GiB
 
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
     parted --script /dev/${DRIVE} mkpart "root" ext4 8GiB 100%
