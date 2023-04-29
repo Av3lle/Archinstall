@@ -87,8 +87,8 @@ if [[ $AUTO == 1 ]]; then
   mount /dev/${DRIVE_AUTO}1 /mnt/boot/efi
 
   # Подключение swap раздела
-  #mkswap /dev/${DRIVE}2
-  #swapon /dev/${DRIVE}2
+  mkswap /dev/${DRIVE_AUTO}2
+  swapon /dev/${DRIVE_AUTO}2
 else
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
   read DRIVE
