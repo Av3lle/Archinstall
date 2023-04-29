@@ -36,93 +36,130 @@ cat <<EOF
    /  '  '  \\
   / ..'  '.. \\
  /_\`        \`_\\
-
-
                                   Wrning!!!
               Установка производится исключительно на UEFI, EFI
-
-
-
 EOF
 
 
 # Выбираем диск для установки
-lsblk
-echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
-read DRIVE
+echo "1 - Автоматическая усановка   2 - Ручная установка"
+echo -n "Выберите режим установки: "
+read AUTO
 
-echo $'\n1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk'
-echo -n "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
-read PARTITION_UTIL
-
-if [[ $PARTITION_UTIL == 1 ]] || [[ $PARTITION_UTIL == fdisk ]] || [[ $PARTITION_UTIL == Fdisk ]] || [[ $PARTITION_UTIL == FDISK ]]; then
-  fdisk /dev/${DRIVE}
-elif [[ $PARTITION_UTIL == 2 ]] || [[ $PARTITION_UTIL == parted ]] || [[ $PARTITION_UTIL == Parted ]] || [[ $PARTITION_UTIL == PARTED ]]; then
-  parted /dev/${DRIVE}
-elif [[ $PARTITION_UTIL == 3 ]] || [[ $PARTITION_UTIL == gdisk ]] || [[ $PARTITION_UTIL == Gdisk ]] || [[ $PARTITION_UTIL == GDISK ]]; then
-  gdisk /dev/${DRIVE}
-elif [[ $PARTITION_UTIL == 4 ]] || [[ $PARTITION_UTIL == cfdisk ]] || [[ $PARTITION_UTIL == Cfdisk ]] || [[ $PARTITION_UTIL == CFDISK ]]; then
-  cfdisk /dev/${DRIVE}
-else
-  echo "Произошла ошибка! Будет выбран cfdisk!"
-  sleep 2
-  cfdisk $DRIVE
-fi
-
-
-# Выбираем тип файловой системы
 clear
-echo "Выберите тип файловой сисетемы: "
-echo "1 - ext4   2 - btrfs   3 - xfs"
-read FILE_SYSTEM
-clear
-
 lsblk
-echo -n "Выберите загрузочный раздел (Например: sda1): "
-read BOOT_PARTITION
+if [[ $AUTO == 1 ]]; then
+  # Выбор диска для автоматической установки 
+  echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
+  read DRIVE
 
-echo -n "Выберите корневой раздел (Например: sda2): "
-read ROOT_PARTITION
+  echo '\nВыберите тип файловой сисетемы: '
+  echo -n '1 - ext4   2 - btrfs   3 - xfs'
+  read FILE_SYSTEM
 
-mkfs.vfat -F32 /dev/${BOOT_PARTITION}
-if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
-  mkfs.ext4 /dev/${ROOT_PARTITION}
-elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
-  mkfs.ext4 /dev/${ROOT_PARTITION}
-elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
-  mkfs.ext4 /dev/${ROOT_PARTITION}
+
+  parted --script /dev/${DRIVE} mklable gpt
+  parted --script /dev/${DRIVE} mkpart "EFI" fat32 1MiB 512MiB
+  parted --script /dev/${DRIVE} set 1 esp on
+  parted --script /dev/${DRIVE} mkpart "swap" linux-swap 512MiB 8GiB
+
+  if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
+    parted --script /dev/${DRIVE} mkpart "root" ext4 8GiB 100%
+  elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
+    parted --script /dev/${DRIVE} mkpart "root" btrfs 8GiB 100%
+  elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
+    parted --script /dev/${DRIVE} mkpart "root" xfs 8GiB 100%
+  else
+    echo "Произошла ошибка! Будет выбран ext4!"
+    sleep 2
+    mkfs.ext4 mkfs.ext4 /dev/${ROOT_PARTITION}
+  fi
+
+  # Монтирование и создание необходимых директорий
+  mount /dev/${DRIVE}3 /mnt
+  mkdir /mnt/boot
+  mkdir /mnt/boot/efi
+  mount /dev/${DRIVE}1 /mnt/boot/efi
+
+  # Подключение swap раздела
+  mkswap /dev/${DRIVE}2
+  swapon /dev/${DRIVE}2
 else
-  echo "Произошла ошибка! Будет выбран ext4!"
-  sleep 2
-  mkfs.ext4 mkfs.ext4 /dev/${ROOT_PARTITION}
-fi
+  echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
+  read DRIVE
 
-# Монтируем корневой раздел + создаем каталоги
-mount /dev/${ROOT_PARTITION} /mnt
-mkdir /mnt/boot
-mkdir /mnt/boot/efi
-mount /dev/${BOOT_PARTITION} /mnt/boot/efi
+  echo $'\n1 - fdisk    2 - parted    3 - gdisk    4 - cfdisk'
+  echo -n "Выберите утилиту для того чтобы разбить диски(и) на раздел(ы): "
+  read PARTITION_UTIL
+
+  if [[ $PARTITION_UTIL == 1 ]] || [[ $PARTITION_UTIL == fdisk ]] || [[ $PARTITION_UTIL == Fdisk ]] || [[ $PARTITION_UTIL == FDISK ]]; then
+    fdisk /dev/${DRIVE}
+  elif [[ $PARTITION_UTIL == 2 ]] || [[ $PARTITION_UTIL == parted ]] || [[ $PARTITION_UTIL == Parted ]] || [[ $PARTITION_UTIL == PARTED ]]; then
+    parted /dev/${DRIVE}
+  elif [[ $PARTITION_UTIL == 3 ]] || [[ $PARTITION_UTIL == gdisk ]] || [[ $PARTITION_UTIL == Gdisk ]] || [[ $PARTITION_UTIL == GDISK ]]; then
+    gdisk /dev/${DRIVE}
+  elif [[ $PARTITION_UTIL == 4 ]] || [[ $PARTITION_UTIL == cfdisk ]] || [[ $PARTITION_UTIL == Cfdisk ]] || [[ $PARTITION_UTIL == CFDISK ]]; then
+    cfdisk /dev/${DRIVE}
+  else
+    echo "Произошла ошибка! Будет выбран cfdisk!"
+    sleep 2
+    cfdisk $DRIVE
+  fi
 
 
-# Запрашиваем у пользователя монтирование домашнего каталога в другой раздел
-echo -n "Хотите монтирвать домашний каталог на другой раздел? (Y/n): "
-read HOME
+  # Выбираем тип файловой системы
+  clear
+  echo "Выберите тип файловой сисетемы: "
+  echo "1 - ext4   2 - btrfs   3 - xfs"
+  read FILE_SYSTEM
+  clear
 
-if [[ $HOME == Y ]] || [[ $HOME == yes ]] || [[ $HOME == Yes ]] || [[ $HOME == YES ]] || [[ $HOME == y ]] || [[ $HOME == д ]] || [[ $HOME == да ]] || [[ $HOME == Да ]] || [[ $HOME == ДА ]]; then
-  echo -n "Укажите раздел для монтирвания (Например: sda3): "
-  read HOME_PARTITION
-  echo "Идет монтирвание '/home' в дургой раздел..."
-  mkdir /mnt/home
-  mount /dev/${HOME_PARTITION} /mnt/home
-  sleep 2
-else
-  :
-fi
+  lsblk
+  echo -n "Выберите загрузочный раздел (Например: sda1): "
+  read BOOT_PARTITION
+
+  echo -n "Выберите корневой раздел (Например: sda2): "
+  read ROOT_PARTITION
+
+  mkfs.vfat -F32 /dev/${BOOT_PARTITION}
+  if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
+    mkfs.ext4 /dev/${ROOT_PARTITION}
+  elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
+    mkfs.ext4 /dev/${ROOT_PARTITION}
+  elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
+    mkfs.ext4 /dev/${ROOT_PARTITION}
+  else
+    echo "Произошла ошибка! Будет выбран ext4!"
+    sleep 2
+    mkfs.ext4 mkfs.ext4 /dev/${ROOT_PARTITION}
+  fi
+
+  # Монтируем корневой раздел + создаем каталоги
+  mount /dev/${ROOT_PARTITION} /mnt
+  mkdir /mnt/boot
+  mkdir /mnt/boot/efi
+  mount /dev/${BOOT_PARTITION} /mnt/boot/efi
+
+
+  # Запрашиваем у пользователя монтирование домашнего каталога в другой раздел
+  echo -n "Хотите монтирвать домашний каталог на другой раздел? (Y/n): "
+  read HOME
+
+  if [[ $HOME == Y ]] || [[ $HOME == yes ]] || [[ $HOME == Yes ]] || [[ $HOME == YES ]] || [[ $HOME == y ]] || [[ $HOME == д ]] || [[ $HOME == да ]] || [[ $HOME == Да ]] || [[ $HOME == ДА ]]; then
+    echo -n "Укажите раздел для монтирвания (Например: sda3): "
+    read HOME_PARTITION
+    echo "Идет монтирвание '/home' в дургой раздел..."
+    mkdir /mnt/home
+    mount /dev/${HOME_PARTITION} /mnt/home
+    sleep 2
+  else
+    :
+  fi
 
 
 # Проверяем созданные нами разделы 
 clear
-echo "Проверьте созданные вами разделы! "
+echo "Проверьте разделы! "
 lsblk
 sleep 5
 clear
