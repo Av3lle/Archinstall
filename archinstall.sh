@@ -60,19 +60,24 @@ if [[ $AUTO == 1 ]]; then
 
   parted --script /dev/${DRIVE_AUTO} mklabel gpt
   parted --script /dev/${DRIVE_AUTO} mkpart EFI fat32 1MiB 512MiB
+  mkfs.vfat -F32 /dev/${DRIVE_AUTO}1
   parted --script /dev/${DRIVE_AUTO} set 1 esp on
   parted --script /dev/${DRIVE_AUTO} mkpart swap linux-swap 512MiB 8GiB
 
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
     parted --script /dev/${DRIVE_AUTO} mkpart root ext4 8GiB 100%
+    mkfs.ext4 /dev/${DRIVE_AUTO}3
   elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
     parted --script /dev/${DRIVE_AUTO} mkpart root btrfs 8GiB 100%
+    mkfs.btrfs /dev/${DRIVE_AUTO}3
   elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
     parted --script /dev/${DRIVE_AUTO} mkpart root xfs 8GiB 100%
+    mkfs.xfs /dev/${DRIVE_AUTO}3
   else
     echo "Произошла ошибка! Будет выбран ext4!"
     sleep 2
     parted --script /dev/${DRIVE_AUTO} mkpart root ext4 8GiB 100%
+    mkfs.ext4 /dev/${DRIVE_AUTO}3
   fi
 
   # Монтирование и создание необходимых директорий
@@ -125,9 +130,9 @@ else
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
     mkfs.ext4 /dev/${ROOT_PARTITION}
   elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
-    mkfs.ext4 /dev/${ROOT_PARTITION}
+    mkfs.btrfs /dev/${ROOT_PARTITION}
   elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
-    mkfs.ext4 /dev/${ROOT_PARTITION}
+    mkfs.xfs /dev/${ROOT_PARTITION}
   else
     echo "Произошла ошибка! Будет выбран ext4!"
     sleep 2
