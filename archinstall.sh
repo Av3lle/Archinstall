@@ -367,10 +367,10 @@ if [[ $1 = 1 ]]; then
   echo -n "Выберите производителя вашей видеокарты для установки драйвера: "
   read VIDEO_DRIVER
   if [[ $VIDEO_DRIVER == 1 ]] || [[ $VIDEO_DRIVER == amd ]] || [[ $VIDEO_DRIVER == Amd ]] || [[ $VIDEO_DRIVER == AMD ]]; then
-    echo "Идет установка драйверов на AMD..."
+    echo $'\nИдет установка драйверов на AMD...'
     pacman -S --needed --noconfirm xf86-video-ati xf86-video-amdgpu mesa mesa-demos lib32-mesa vulkan-radeon lib32-vulkan-radeon vulkan-icd-loader lib32-vulkan-icd-loader amdvlk lib32-amdvlk network-manager-applet
   elif [[ $VIDEO_DRIVER == 2 ]] || [[ $VIDEO_DRIVER == nvidia ]] || [[ $VIDEO_DRIVER == Nvidia ]] || [[ $VIDEO_DRIVER == NVIDIA ]]; then
-    echo "1 - Проприетарный драйвер   2 - Open source драйвер"
+    echo $'\n1 - Проприетарный драйвер   2 - Open source драйвер'
     echo -n "Выберите тип драйверов: "
     read NVIDIA
     if [[ $NVIDIA == 1 ]]; then
@@ -383,6 +383,7 @@ if [[ $1 = 1 ]]; then
       :
     fi
   elif [[ $VIDEO_DRIVER == 3 ]] || [[ $VIDEO_DRIVER == intel ]] || [[ $VIDEO_DRIVER == Intel ]] || [[ $VIDEO_DRIVER == INTEL ]]; then
+    echo $'\nИдет установка драйверов на Intel...'
     pacman -S --needed --noconfirm mesa mesa-demos xf86-video-intel lib32-mesa vulkan-intel lib32-vulkan-intel vulkan-icd-loader lib32-vulkan-icd-loader network-manager-applet libva-intel-driver lib32-libva-intel-driver
   else
     :
@@ -397,8 +398,8 @@ if [[ $1 = 1 ]]; then
   read DESKTOP
 
   if [[ $DESKTOP == 1 ]] || [[ $DESKTOP == de ]] || [[ $DESKTOP == DE ]]; then
-    echo "1 - Gnome   2 - Gnome (minimal)   3 - KDE   4 - KDE (Minimal)   5 - Xfce   6 - Xfce (Minimal)"
-    echo "Выберите графической окружение из перечисленных: "
+    echo $'\n1 - Gnome   2 - Gnome (minimal)   3 - KDE   4 - KDE (Minimal)   5 - Xfce   6 - Xfce (Minimal)'
+    echo -n "Выберите графической окружение из перечисленных: "
     read DE
     pacman -S --needed --noconfirm xorg xorg-server firefox
     if [[ $DE == 1 ]] || [[ $DE == gnome ]] || [[ $DE == Gnome ]] || [[ $DE == GNOME ]]; then
@@ -423,8 +424,8 @@ if [[ $1 = 1 ]]; then
       echo "Произошла ошибка. Был выбран вариант без рабочего окружения."
     fi
   elif [[ $DESKTOP == 2 ]] || [[ $DESKTOP == wm ]] || [[ $DESKTOP == WM ]]; then
-    echo "1 - i3   2 - bspwm   3 - openbox   4 - xmonad   5 - awesome"
-    echo "Выберите оконный менеджер из перечисленных: "
+    echo $'\n1 - i3   2 - bspwm   3 - openbox   4 - xmonad   5 - awesome'
+    echo -n "Выберите оконный менеджер из перечисленных: "
     read WM
     pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
     systemctl enable lightdm.service
@@ -448,6 +449,7 @@ if [[ $1 = 1 ]]; then
   else
     :
   fi
+  clear
 
 
   # Установка yay, gamemode, mangohud, goverlay
