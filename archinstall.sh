@@ -42,7 +42,7 @@ EOF
 
 
 # Выбираем диск для установки
-echo "1 - Автоматическая усановка   2 - Ручная установка"
+echo $'\n1 - Автоматическая усановка   2 - Ручная установка'
 echo -n "Выберите режим установки: "
 read AUTO
 
@@ -53,26 +53,26 @@ if [[ $AUTO == 1 ]]; then
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
   read DRIVE
 
-  echo '1 - ext4   2 - btrfs   3 - xfs'
+  echo $'\n1 - ext4   2 - btrfs   3 - xfs'
   echo -n $'\nВыберите тип файловой сисетемы: '
   read FILE_SYSTEM
 
 
   parted /dev/${DRIVE} mklabel gpt
-  parted /dev/${DRIVE} mkpart "EFI" fat32 1MiB 512MiB
+  parted /dev/${DRIVE} mkpart "EFI system partition" fat32 1MiB 512MiB
   parted /dev/${DRIVE} set 1 esp on
-  parted /dev/${DRIVE} mkpart "swap" linux-swap 512MiB 8GiB
+  parted /dev/${DRIVE} mkpart "swap partition" linux-swap 512MiB 8GiB
 
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
-    parted --script /dev/${DRIVE} mkpart "root" ext4 8GiB 100%
+    parted --script /dev/${DRIVE} mkpart "root partition" ext4 8GiB 100%
   elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
-    parted --script /dev/${DRIVE} mkpart "root" btrfs 8GiB 100%
+    parted --script /dev/${DRIVE} mkpart "root partition" btrfs 8GiB 100%
   elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
-    parted --script /dev/${DRIVE} mkpart "root" xfs 8GiB 100%
+    parted --script /dev/${DRIVE} mkpart "root partition" xfs 8GiB 100%
   else
     echo "Произошла ошибка! Будет выбран ext4!"
     sleep 2
-    mkfs.ext4 mkfs.ext4 /dev/${ROOT_PARTITION}
+    parted --script /dev/${DRIVE} mkpart "root partition" ext4 8GiB 100%
   fi
 
   # Монтирование и создание необходимых директорий
