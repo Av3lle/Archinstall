@@ -54,14 +54,14 @@ if [[ $AUTO == 1 ]]; then
   read DRIVE
 
   echo $'\n1 - ext4   2 - btrfs   3 - xfs'
-  echo -n $'\nВыберите тип файловой сисетемы: '
+  echo -n 'Выберите тип файловой сисетемы: '
   read FILE_SYSTEM
 
 
-  parted /dev/${DRIVE} mklabel gpt
-  parted /dev/${DRIVE} mkpart "EFI system partition" fat32 1MiB 512MiB
-  parted /dev/${DRIVE} set 1 esp on
-  parted /dev/${DRIVE} mkpart "swap partition" linux-swap 512MiB 8GiB
+  parted --script /dev/${DRIVE} mklabel gpt
+  parted --script /dev/${DRIVE} mkpart "EFI system partition" fat32 1MiB 512MiB
+  parted --script /dev/${DRIVE} set 1 esp on
+  parted --script /dev/${DRIVE} mkpart "swap partition" linux-swap 512MiB 8GiB
 
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
     parted --script /dev/${DRIVE} mkpart "root partition" ext4 8GiB 100%
