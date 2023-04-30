@@ -430,7 +430,7 @@ if [[ $1 = 1 ]]; then
     pacman -S --needed --noconfirm xorg xorg-server lightdm lightdm-gtk-greeter
     systemctl enable lightdm.service
     sleep 2
-    pacman -S --needed --noconfirm xterm alacritty dmenu thunar firefox
+    pacman -S --needed --noconfirm xterm alacritty mousepad dmenu thunar firefox
     if [[ $WM == 1 ]] || [[ $WM == i3 ]] || [[ $WM == I3 ]]; then
       pacman -S --needed --noconfirm i3
     elif [[ $WM == 2 ]] || [[ $WM == bspwm ]] || [[ $WM == Bspwm ]] || [[ $WM == BSPWM ]]; then
@@ -451,11 +451,21 @@ if [[ $1 = 1 ]]; then
   fi
   clear
 
-
+  
+  echo "Идет установка необходимых шрифтов..."
+  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu
+  
+  
   # Установка yay, gamemode, mangohud, goverlay
   echo -n "Хотите установить пакеты для игр? (Y/n): "
   read GAMES_PACKAGE
   if [[ $GAMES_PACKAGE == y ]] || [[ $GAMES_PACKAGE == Y ]] || [[ $GAMES_PACKAGE == yes ]] || [[ $GAMES_PACKAGE == YES ]] || [[ $GAMES_PACKAGE == Yes ]]; then
+    echo "Идет установка Steam..."
+    pacman -S --needed --noconfirm steam
+    
+    echo "Идет установка discord..."
+    pacman -S --needed --noconfirm discord
+    
     echo "Идет установка gamemode..."
     pacman -S --needed --noconfirm gamemode
 
@@ -468,9 +478,9 @@ if [[ $1 = 1 ]]; then
     sleep 4
 
     # Оптимизация OpenGL
-    echo "__GL_THREADED_OPTIMIZATIONS=1" >> /etc/environment
-    echo "MESA_GL_VERSION_OVERRIDE=4.5" >> /etc/environment
-    echo "MESA_GLSL_VERSION_OVERRIDE=450" >> /etc/environment
+    echo "__GL_THREADED_OPTIMIZATIONS=1" | tee -a /etc/environment
+    echo "MESA_GL_VERSION_OVERRIDE=4.5" | tee -a /etc/environment
+    echo "MESA_GLSL_VERSION_OVERRIDE=450" | tee -a /etc/environment
   else
     :
   fi
@@ -510,7 +520,7 @@ if [[ $1 = 1 ]]; then
   exit
 else
   umount -R /mnt
-  rm -rf post_archinstall.sh
+  rm -rf /post_archinstall.sh
   clear 
   echo "Система будет перезагружена через 10 сек."
   sleep 10
