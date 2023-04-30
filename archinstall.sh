@@ -260,7 +260,7 @@ if [[ $1 = 1 ]]; then
   read USERNAME
   useradd -m -g users -G wheel,audio,video $USERNAME
 
-  echo $'Введите пароль для пользователя $USERNAME\n'
+  echo $'Введите пароль для пользователя ${USERNAME}\n'
   passwd $USERNAME
   sleep 2
 
