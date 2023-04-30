@@ -114,8 +114,8 @@ else
 
   # Выбираем тип файловой системы
   clear
-  echo "Выберите тип файловой сисетемы: "
   echo "1 - ext4   2 - btrfs   3 - xfs"
+  echo -n "Выберите тип файловой сисетемы: "
   read FILE_SYSTEM
   clear
 
@@ -260,7 +260,7 @@ if [[ $1 = 1 ]]; then
   read USERNAME
   useradd -m -g users -G wheel,audio,video $USERNAME
 
-  echo "Введите пароль для пользователя $USERNAME"
+  echo $'Введите пароль для пользователя $USERNAME\n'
   passwd $USERNAME
   sleep 2
 
