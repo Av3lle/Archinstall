@@ -453,7 +453,8 @@ if [[ $1 = 1 ]]; then
 
   
   echo "Идет установка необходимых шрифтов..."
-  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu
+  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts
+  clear
   
   
   # Установка yay, gamemode, mangohud, goverlay
