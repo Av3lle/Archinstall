@@ -52,7 +52,6 @@ lsblk
 if [[ $AUTO == 1 ]]; then
   echo $'\n1 - UEFI   2 - BIOS'
   echo -n "Выберите один из вариантов: "
-  read UB
 
   # Выбор диска для автоматической установки 
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
@@ -77,7 +76,8 @@ if [[ $AUTO == 1 ]]; then
     mkfs.ext4 /dev/${DRIVE_AUTO}1
     parted --script /dev/${DRIVE_AUTO} set 1 boot on
     parted --script /dev/${DRIVE_AUTO} mkpart swap linux-swap 100MiB ${SWAP}GiB
-
+  fi
+  
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
     parted --script /dev/${DRIVE_AUTO} mkpart root ext4 ${SWAP}GiB 100%
     mkfs.ext4 /dev/${DRIVE_AUTO}3
@@ -104,6 +104,7 @@ if [[ $AUTO == 1 ]]; then
     mount /dev/${DRIVE_AUTO}3 /mnt
     mkdir /mnt/boot
     mount /dev/${DRIVE_AUTO}1 /mnt/boot
+  fi
 
   # Подключение swap раздела
   mkswap /dev/${DRIVE_AUTO}2
