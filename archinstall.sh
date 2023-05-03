@@ -49,6 +49,10 @@ read AUTO
 clear
 lsblk
 if [[ $AUTO == 1 ]]; then
+  echo $'\n1 - UEFI   2 - BIOS'
+  echo -n "Выберите один из вариантов: "
+  read UB
+
   # Выбор диска для автоматической установки 
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
   read DRIVE_AUTO
@@ -57,34 +61,48 @@ if [[ $AUTO == 1 ]]; then
   echo -n 'Выберите тип файловой сисетемы: '
   read FILE_SYSTEM
 
+  echo -n $'\nВведите размер swap файла без еденицы измерения (Размер измеряется в GiB, например: 8 = 8GiB): '
+  read SWAP
 
-  parted --script /dev/${DRIVE_AUTO} mklabel gpt
-  parted --script /dev/${DRIVE_AUTO} mkpart EFI fat32 1MiB 512MiB
-  mkfs.vfat -F32 /dev/${DRIVE_AUTO}1
-  parted --script /dev/${DRIVE_AUTO} set 1 esp on
-  parted --script /dev/${DRIVE_AUTO} mkpart swap linux-swap 512MiB 8GiB
+  if [[ $UB == 1 ]]; then
+    parted --script /dev/${DRIVE_AUTO} mklabel gpt
+    parted --script /dev/${DRIVE_AUTO} mkpart EFI fat32 1MiB 512MiB
+    mkfs.vfat -F32 /dev/${DRIVE_AUTO}1
+    parted --script /dev/${DRIVE_AUTO} set 1 esp on
+    parted --script /dev/${DRIVE_AUTO} mkpart swap linux-swap 512MiB ${SWAP}GiB
+  else
+    parted --script /dev/${DRIVE_AUTO} mklabel gpt
+    parted --script /dev/${DRIVE_AUTO} mkpart BIOS ext4 1MiB 100MiB
+    mkfs.ext4 /dev/${DRIVE_AUTO}1
+    parted --script /dev/${DRIVE_AUTO} set 1 boot on
+    parted --script /dev/${DRIVE_AUTO} mkpart swap linux-swap 100MiB ${SWAP}GiB
 
   if [[ $FILE_SYSTEM == 1 ]] || [[ $FILE_SYSTEM == ext4 ]] || [[ $FILE_SYSTEM == Ext4 ]] || [[ $FILE_SYSTEM == EXT4 ]]; then
-    parted --script /dev/${DRIVE_AUTO} mkpart root ext4 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart root ext4 ${SWAP}GiB 100%
     mkfs.ext4 /dev/${DRIVE_AUTO}3
   elif [[ $FILE_SYSTEM == 2 ]] || [[ $FILE_SYSTEM == btrfs ]] || [[ $FILE_SYSTEM == Btrfs ]] || [[ $FILE_SYSTEM == BTRFS ]]; then
-    parted --script /dev/${DRIVE_AUTO} mkpart root btrfs 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart root btrfs ${SWAP}GiB 100%
     mkfs.btrfs /dev/${DRIVE_AUTO}3
   elif [[ $FILE_SYSTEM == 3 ]] || [[ $FILE_SYSTEM == xfs ]] || [[ $FILE_SYSTEM == Xfs ]] || [[ $FILE_SYSTEM == XFS ]]; then
-    parted --script /dev/${DRIVE_AUTO} mkpart root xfs 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart root xfs ${SWAP}GiB 100%
     mkfs.xfs /dev/${DRIVE_AUTO}3
   else
     echo "Произошла ошибка! Будет выбран ext4!"
     sleep 2
-    parted --script /dev/${DRIVE_AUTO} mkpart root ext4 8GiB 100%
+    parted --script /dev/${DRIVE_AUTO} mkpart root ext4 ${SWAP}GiB 100%
     mkfs.ext4 /dev/${DRIVE_AUTO}3
   fi
 
   # Монтирование и создание необходимых директорий
-  mount /dev/${DRIVE_AUTO}3 /mnt
-  mkdir /mnt/boot
-  mkdir /mnt/boot/efi
-  mount /dev/${DRIVE_AUTO}1 /mnt/boot/efi
+  if [[ $UB == 1 ]]; then
+    mount /dev/${DRIVE_AUTO}3 /mnt
+    mkdir /mnt/boot
+    mkdir /mnt/boot/efi
+    mount /dev/${DRIVE_AUTO}1 /mnt/boot/efi
+  else
+    mount /dev/${DRIVE_AUTO}3 /mnt
+    mkdir /mnt/boot
+    mount /dev/${DRIVE_AUTO}1 /mnt/boot
 
   # Подключение swap раздела
   mkswap /dev/${DRIVE_AUTO}2
