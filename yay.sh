@@ -1,3 +1,4 @@
+read $USERNAME
 echo -n "Хотите установить пакеты для игр? (Y/n): "
   read GAMES_PACKAGE
   if [[ $GAMES_PACKAGE == y ]] || [[ $GAMES_PACKAGE == Y ]] || [[ $GAMES_PACKAGE == yes ]] || [[ $GAMES_PACKAGE == YES ]] || [[ $GAMES_PACKAGE == Yes ]]; then
