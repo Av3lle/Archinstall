@@ -268,7 +268,7 @@ if [[ $1 = 1 ]]; then
   # Создание пароля для root
   echo "Введите пароль для вашего root пользователя: "
   passwd
-  sleep 2
+  sleep 1
   clear
 
 
