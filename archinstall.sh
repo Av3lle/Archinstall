@@ -474,7 +474,7 @@ if [[ $1 = 1 ]]; then
 
   
   echo "Идет установка необходимых шрифтов..."
-  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts
+  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts noto-fonts-emoji
   clear
   
   
@@ -495,15 +495,20 @@ if [[ $1 = 1 ]]; then
     clear
 
     echo "Идет установка yay..."
-    pacman -S --needed --noconfirm git
+    pacman -S --needed --noconfirm git ccache ninja
     sed -i s/"%wheel ALL=(ALL:ALL) ALL"/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/g /etc/sudoers
     cd "/home/${USERNAME}" && sudo -u $USERNAME git clone https://aur.archlinux.org/yay.git && cd yay
     sudo -u $USERNAME makepkg -sri --needed --noconfirm
     cd .. && rm -rf yay
     clear
     
-    echo "Идет установка mangohud-git и goverlay-git..."
-    yay -S --needed --noconfirm mangohud-git goverlay-git
+    echo "Идет установка mangohud-git..."
+    sudo -u $USERNAME yay -S --needed --noconfirm mangohud-git 
+    clear
+    
+    echo "Идет установка goverlay-git..."
+    sudo -u $USERNAME yay -S --needed --noconfirm goverlay-git
+    
     sleep 4
     
 
