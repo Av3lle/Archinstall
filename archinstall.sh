@@ -496,7 +496,7 @@ if [[ $1 = 1 ]]; then
 
     echo "Идет установка yay..."
     pacman -S --needed --noconfirm git
-    sed -i s/"$USERNAME ALL=(ALL) ALL"/"$USERNAME ALL=(ALL) NOPASSWD: ALL"/g /etc/sudoers.d/$USERNAME
+    sed -i s/"%wheel ALL=(ALL:ALL) ALL"/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/g /etc/sudoers
     cd "/home/${USERNAME}" && sudo -u $USERNAME git clone https://aur.archlinux.org/yay.git && cd yay
     sudo -u $USERNAME makepkg -sri --needed --noconfirm
     cd .. && rm -rf yay
@@ -512,7 +512,7 @@ if [[ $1 = 1 ]]; then
     echo "MESA_GL_VERSION_OVERRIDE=4.5" | tee -a /etc/environment
     echo "MESA_GLSL_VERSION_OVERRIDE=450" | tee -a /etc/environment
     
-    sed -i s/"$USERNAME ALL=(ALL) NOPASSWD: ALL"/"$USERNAME ALL=(ALL) ALL"/g /etc/sudoers.d/$USERNAME
+    sed -i s/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/"%wheel ALL=(ALL:ALL) ALL"/g /etc/sudoers
   else
     :
   fi
