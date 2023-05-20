@@ -52,7 +52,6 @@ lsblk
 if [[ $AUTO == 1 ]]; then
   echo $'\n1 - UEFI   2 - BIOS'
   echo -n "Выберите один из вариантов: "
-  read UB
 
   # Выбор диска для автоматической установки 
   echo -n $'\nВыберите диск для установки (Например: nvme0n1): '
@@ -268,7 +267,7 @@ if [[ $1 = 1 ]]; then
   # Создание пароля для root
   echo "Введите пароль для вашего root пользователя: "
   passwd
-  sleep 1
+  sleep 2
   clear
 
 
@@ -281,7 +280,7 @@ if [[ $1 = 1 ]]; then
   read USERNAME
   useradd -m -g users -G wheel,audio,video $USERNAME
 
-  echo "Введите пароль для пользователя $USERNAME"
+  echo $'Введите пароль для пользователя ${USERNAME}\n'
   passwd $USERNAME
   sleep 2
 
@@ -371,8 +370,8 @@ if [[ $1 = 1 ]]; then
     pacman -S --needed --noconfirm pulseaudio pulseaudio-alsa pulseaudio-jack pavucontrol
   elif [[ $AUDIO_DRIVER == 2 ]] || [[ $AUDIO_DRIVER == pipe ]] || [[ $AUDIO_DRIVER == Pipe ]] || [[ $AUDIO_DRIVER == PIPE ]]; then
     echo "Идет установка PipeWire"
-    pacman -S --needed --noconfirm pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber pavucontrol
-    systemctl enable --now pipewire.service pipewire.socket pipewire-pulse.service wireplumber.service
+    pacman -S --needed --noconfirm pacman -S pipewire pipewire-alsa pipewire-jack lib32-pipewire lib32-pipewire-jack libpulse lib32-libpulse xdg-desktop-portal pavucontrol
+    systemctl enable --now pipewire
   elif [[ $AUDIO_DRIVER == 3 ]] || [[ $AUDIO_DRIVER == alsa ]] || [[ $AUDIO_DRIVER == Alsa ]] || [[ $AUDIO_DRIVER == ALSA ]]; then
     echo "Идет установка Alsa"
     pacman -S --needed --noconfirm alsa-utils alsa-firmware alsa-card-profiles alsa-plugins pavucontrol
@@ -474,7 +473,7 @@ if [[ $1 = 1 ]]; then
 
   
   echo "Идет установка необходимых шрифтов..."
-  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts noto-fonts-emoji
+  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts
   clear
   
   
@@ -484,40 +483,25 @@ if [[ $1 = 1 ]]; then
   if [[ $GAMES_PACKAGE == y ]] || [[ $GAMES_PACKAGE == Y ]] || [[ $GAMES_PACKAGE == yes ]] || [[ $GAMES_PACKAGE == YES ]] || [[ $GAMES_PACKAGE == Yes ]]; then
     echo "Идет установка Steam..."
     pacman -S --needed --noconfirm steam
-    clear
     
     echo "Идет установка discord..."
     pacman -S --needed --noconfirm discord
-    clear
     
     echo "Идет установка gamemode..."
     pacman -S --needed --noconfirm gamemode
-    clear
 
     echo "Идет установка yay..."
-    pacman -S --needed --noconfirm git ccache ninja
-    sed -i s/"%wheel ALL=(ALL:ALL) ALL"/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/g /etc/sudoers
-    cd "/home/${USERNAME}" && sudo -u $USERNAME git clone https://aur.archlinux.org/yay.git && cd yay
-    sudo -u $USERNAME makepkg -sri --needed --noconfirm
-    cd .. && rm -rf yay
-    clear
-    
-    echo "Идет установка mangohud-git..."
-    sudo -u $USERNAME yay -S --needed --noconfirm mangohud-git 
-    clear
-    
-    echo "Идет установка goverlay-git..."
-    sudo -u $USERNAME yay -S --needed --noconfirm goverlay-git
-    
+    pacman -S --needed --noconfirm git
+    git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -sri && cd .. && rm -rf yay
+
+    echo "Идет установка mangohud-git и goverlay-git..."
+    yay -S --needed --noconfirm mangohud-git goverlay-git
     sleep 4
-    
 
     # Оптимизация OpenGL
     echo "__GL_THREADED_OPTIMIZATIONS=1" | tee -a /etc/environment
     echo "MESA_GL_VERSION_OVERRIDE=4.5" | tee -a /etc/environment
     echo "MESA_GLSL_VERSION_OVERRIDE=450" | tee -a /etc/environment
-    
-    sed -i s/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/"%wheel ALL=(ALL:ALL) ALL"/g /etc/sudoers
   else
     :
   fi
