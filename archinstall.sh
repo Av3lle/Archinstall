@@ -505,11 +505,6 @@ if [[ $1 = 1 ]]; then
     echo "Идет установка goverlay-git..."
     sudo -u $USERNAME yay -S --needed --noconfirm goverlay-git
 
-    pacman -S --needed --noconfirm git
-    git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -sri && cd .. && rm -rf yay
-
-    echo "Идет установка mangohud-git и goverlay-git..."
-    yay -S --needed --noconfirm mangohud-git goverlay-git
     sleep 4
 
     # Оптимизация OpenGL
