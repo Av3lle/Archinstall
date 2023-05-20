@@ -267,7 +267,7 @@ if [[ $1 = 1 ]]; then
   # Создание пароля для root
   echo "Введите пароль для вашего root пользователя: "
   passwd
-  sleep 2
+  sleep 1
   clear
 
 
@@ -280,7 +280,7 @@ if [[ $1 = 1 ]]; then
   read USERNAME
   useradd -m -g users -G wheel,audio,video $USERNAME
 
-  echo $'Введите пароль для пользователя ${USERNAME}\n'
+  echo "Введите пароль для пользователя $USERNAME"
   passwd $USERNAME
   sleep 2
 
@@ -473,7 +473,7 @@ if [[ $1 = 1 ]]; then
 
   
   echo "Идет установка необходимых шрифтов..."
-  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts
+  pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts noto-fonts-emoji
   clear
   
   
@@ -491,6 +491,20 @@ if [[ $1 = 1 ]]; then
     pacman -S --needed --noconfirm gamemode
 
     echo "Идет установка yay..."
+    pacman -S --needed --noconfirm git ccache ninja
+    sed -i s/"%wheel ALL=(ALL:ALL) ALL"/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/g /etc/sudoers
+    cd "/home/${USERNAME}" && sudo -u $USERNAME git clone https://aur.archlinux.org/yay.git && cd yay
+    sudo -u $USERNAME makepkg -sri --needed --noconfirm
+    cd .. && rm -rf yay
+    clear
+
+    echo "Идет установка mangohud-git..."
+    sudo -u $USERNAME yay -S --needed --noconfirm mangohud-git 
+    clear
+
+    echo "Идет установка goverlay-git..."
+    sudo -u $USERNAME yay -S --needed --noconfirm goverlay-git
+
     pacman -S --needed --noconfirm git
     git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -sri && cd .. && rm -rf yay
 
@@ -502,6 +516,8 @@ if [[ $1 = 1 ]]; then
     echo "__GL_THREADED_OPTIMIZATIONS=1" | tee -a /etc/environment
     echo "MESA_GL_VERSION_OVERRIDE=4.5" | tee -a /etc/environment
     echo "MESA_GLSL_VERSION_OVERRIDE=450" | tee -a /etc/environment
+    
+    sed -i s/"%wheel ALL=(ALL:ALL) NOPASSWD: ALL"/"%wheel ALL=(ALL:ALL) ALL"/g /etc/sudoers
   else
     :
   fi
