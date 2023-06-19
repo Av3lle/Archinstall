@@ -335,13 +335,17 @@ if [[ $1 = 1 ]]; then
   pacman -S --needed --noconfirm git cairo gcc-libs glibc glslang libdisplay-info libdrm libglvnd libinput libliftoff libx11 \
   libxcb libxcomposite libxfixes libxkbcommon libxrender pango pixman pixman polkit seatd systemd-libs vulkan-icd-loader \
   vulkan-validation-layers wayland wayland-protocols xcb-proto xcb-util xcb-util-errors xcb-util-keysyms xcb-util-renderutil \
-  xcb-util-wm xorg-xinput xorg-xwayland cmake gdb meson ninja vulkan-headers xorgproto 
+  xcb-util-wm xorg-xinput xorg-xwayland cmake gdb meson ninja vulkan-headers xorgproto curl
   pacman -S --needed --noconfirm hyprland hyprpaper waybar rofi alacritty \
   firefox thunar zsh viewnior grim
 
   echo "Идет установка необходимых шрифтов..."
   pacman -S --needed --noconfirm ttf-liberation ttf-dejavu noto-fonts noto-fonts-emoji ttf-fira-mono
   clear
+
+  # Установка oh-my-zsh
+  echo "Идет установка oh-my-zsh..."
+  sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
 
   #Клонируем репозиторий с конфигами
